@@ -1,0 +1,1 @@
+Final test file to verify the new watcher functionality.
