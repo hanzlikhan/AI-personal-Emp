@@ -1,0 +1,23 @@
+# Credentials and Secrets
+watchers/credentials.json
+watchers/token.pickle
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
