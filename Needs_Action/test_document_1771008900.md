@@ -1,0 +1,26 @@
+# test_document.txt Processing Request
+
+## Metadata
+- Type: file_drop
+- Original Name: test_document.txt
+- Timestamp: 2026-02-13 23:55:00
+- Status: pending
+- Source Path: C:\Users\MUHAMMAD HANZLA\Desktop\Portfolio\bronze-tiar\watchers\..\Inbox\test_document.txt
+
+## Suggested Actions
+- [ ] Review file contents
+- [ ] Determine appropriate processing steps
+- [ ] Execute required actions
+- [ ] Update status to completed
+- [ ] Move to Done folder when finished
+
+## Notes
+_Add any relevant notes or observations here_
+
+## File Contents Preview
+```
+This is a test document to verify the new file system watcher functionality.
+```
+
+---
+_Processed by File System Watcher at 2026-02-13 23:55:00_
