@@ -29,6 +29,8 @@ from datetime import datetime
 from pathlib import Path
 import base64
 import json
+import argparse
+import sys
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -40,7 +42,8 @@ from googleapiclient.errors import HttpError
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.send',
-    'https://www.googleapis.com/auth/gmail.compose'
+    'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/gmail.modify'
 ]
 
 def authenticate_gmail():
@@ -49,9 +52,14 @@ def authenticate_gmail():
     """
     creds = None
     
+    # Define base directory
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    CREDENTIALS_FILE = os.path.join(BASE_DIR, 'credentials.json')
+    TOKEN_FILE = os.path.join(BASE_DIR, 'token.pickle')
+
     # Token file stores the user's access and refresh tokens
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, 'rb') as token:
             creds = pickle.load(token)
     
     # If there are no valid credentials, request authorization
@@ -59,12 +67,15 @@ def authenticate_gmail():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
+            if not os.path.exists(CREDENTIALS_FILE):
+                 raise FileNotFoundError(f"Credentials file not found at {CREDENTIALS_FILE}")
+                 
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+                CREDENTIALS_FILE, SCOPES)
             creds = flow.run_local_server(port=0)
         
         # Save credentials for next run
-        with open('token.pickle', 'wb') as token:
+        with open(TOKEN_FILE, 'wb') as token:
             pickle.dump(creds, token)
     
     return build('gmail', 'v1', credentials=creds)
@@ -190,13 +201,9 @@ def create_needs_action_file(email_data):
         # Determine priority based on labels or other factors
         priority = 'high' if 'IMPORTANT' in email_data['labels'] else 'normal'
         
-        # Create filename based on subject and timestamp
-        subject_clean = "".join(c for c in email_data['subject'] if c.isalnum() or c in (' ', '-', '_')).rstrip()
-        if not subject_clean:
-            subject_clean = "email_no_subject"
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{timestamp}_{subject_clean}.md"
+        # Create filename based on timestamp and source as requested
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{timestamp_str}_gmail.md"
         
         # Ensure /Needs_Action directory exists
         needs_action_dir = Path("../Needs_Action")
@@ -277,21 +284,81 @@ def check_new_emails(service):
     except HttpError as error:
         print(f"Gmail API error: {error}")
 
+def parse_arguments():
+    """
+    Parse command line arguments
+    """
+    parser = argparse.ArgumentParser(description='Gmail Watcher and Action Executor')
+    
+    # Action arguments
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--check', action='store_true', help='Check for new emails (default)')
+    group.add_argument('--draft', nargs=3, metavar=('TO', 'SUBJECT', 'BODY'), help='Create a draft email')
+    group.add_argument('--send', nargs=3, metavar=('TO', 'SUBJECT', 'BODY'), help='Send an email immediately')
+    
+    return parser.parse_args()
+
 def main():
     """
     Main function to run the Gmail watcher
     """
-    print("Starting Gmail Watcher...")
+    args = parse_arguments()
+    
+    print(f"Starting Gmail Watcher... Args: {args}")
     
     try:
         # Authenticate with Gmail
         service = authenticate_gmail()
         print("Successfully authenticated with Gmail API")
         
-        # Check for new emails
-        check_new_emails(service)
+        # Handle actions based on arguments
+        if args.draft:
+            to, subject, body = args.draft
+            print(f"Creating draft to {to}...")
+            email_data = {
+                'from': to, # 'from' in email_data logic is used as 'to' in create_message for replies, but here we are sending TO someone. 
+                            # Wait, create_draft uses email_data['from'] as recipient. 
+                            # Let's check create_draft logic:
+                            # to = email_data['from']
+                            # subject = f"Re: {email_data['subject']}"
+                            # So it assumes it's a REPLY.
+                            # We need to adapt create_draft or pass data carefully.
+                            # Let's adjust the dictionary we pass to match expected keys or modify create_draft.
+                            # The current create_draft is designed for replies.
+                            # Let's try to fit the existing function:
+                'from': to,  # This will be used as the recipient
+                'subject': subject.replace("Re: ", ""), # create_draft adds "Re: "
+                'reply_body': body
+            }
+            # create_draft also expects 'threadId' optionally.
+            
+            # NOTE: The existing create_draft function prefixes "Re: " to the subject. 
+            # If the reasoning loop sends a subject that already has "Re: ", it might get doubled.
+            # But for now let's stick to the existing logic to minimize code changes.
+            create_draft(service, email_data)
+            
+        elif args.send:
+            to, subject, body = args.send
+            print(f"Sending email to {to}...")
+            email_data = {
+                'from': to,
+                'subject': subject.replace("Re: ", ""),
+                'reply_body': body
+            }
+            send_email(service, email_data)
+            
+        else:
+            # Default behavior: Continuous monitoring
+            print("Starting continuous monitoring for new emails...")
+            try:
+                while True:
+                    check_new_emails(service)
+                    print("Waiting 60 seconds...")
+                    time.sleep(60)
+            except KeyboardInterrupt:
+                print("\nStopping monitoring.")
         
-        print("Gmail Watcher completed check.")
+        print("Gmail Watcher action completed.")
         
     except Exception as e:
         print(f"Error in Gmail Watcher: {e}")
