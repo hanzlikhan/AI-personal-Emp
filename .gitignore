@@ -21,3 +21,9 @@ env/
 # OS files
 .DS_Store
 Thumbs.db
+
+# User Data and Sessions
+watchers/linkedin_user_data/
+watchers/whatsapp_user_data/
+watchers/token.json
+*.log
