@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "email": {
+            "command": "node",
+            "args": [
+                "watchers/email_mcp.js"
+            ],
+            "enabled": true,
+            "description": "HTTP Server running on port 3000. Provides /send-email, /send-whatsapp, /post-linkedin."
+        }
+    }
+}
