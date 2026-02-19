@@ -1,183 +1,296 @@
+"""
+WhatsApp Watcher — Async Optimized (Silver Tier)
+=================================================
+Polls the local MCP server (/check-whatsapp) every 30 seconds.
+On detection: saves a rich .md to /Needs_Action and spawns reasoning_loop.py.
+
+Optimizations:
+  - asyncio + aiohttp for non-blocking HTTP polling
+  - 30-second rate limit between checks
+  - In-memory sender-cache (avoids duplicate .md files per session)
+  - 3-attempt retry with exponential back-off on MCP failures
+  - Timestamped logging throughout
+
+Requirements:
+  pip install aiohttp
+
+Usage:
+  python whatsapp_watcher.py       # continuous daemon
+"""
+
 import asyncio
-import os
-import time
-import argparse
+import aiohttp  # pip install aiohttp
 import sys
+import subprocess
+from asyncio import subprocess as aio_subprocess  # noqa: F401 — used via create_subprocess_exec
 from datetime import datetime
-from playwright.async_api import async_playwright
-import random
+from pathlib import Path
 
-# Configuration
-WATCH_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Needs_Action")
-USER_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "whatsapp_user_data")
+# ─── Configuration ────────────────────────────────────────────────────────────
+MCP_BASE_URL     = "http://localhost:3000"
+BASE_DIR         = Path(__file__).resolve().parent
+NEEDS_ACTION_DIR = BASE_DIR.parent / 'Needs_Action'
+REASONING_LOOP   = BASE_DIR / 'reasoning_loop.py'
+LOG_PREFIX       = "[WHATSAPP]"
 
-async def monitor_whatsapp():
-    print("[WHATSAPP] Starting WhatsApp Watcher...")
-    async with async_playwright() as p:
-        # Launch browser with persistent context to save login session
-        browser = await p.chromium.launch_persistent_context(
-            user_data_dir=USER_DATA_DIR,
-            headless=False, # Must be False initially for QR code scan, can be True later if session is saved?? Actually handling headless whatsapp is tricky due to auth. Keeping false for now or letting user decide. 
-            # User request said "Run in background", but WhatsApp Web needs a visible window or at least a very good headless setup. 
-            # I will set headless=False for the first run logic, but realistically for a "watcher" it might need to hide.
-            # However, for stability, let's keep it visible or minimized.
-        )
-        
-        page = await browser.new_page()
-        await page.goto("https://web.whatsapp.com/")
-        
-        print("[WHATSAPP] Please scan QR code if not logged in.")
+POLL_INTERVAL    = 30    # seconds between polls
+MAX_RETRIES      = 3     # retry attempts on MCP failure
+RETRY_DELAY      = 5     # base back-off delay (seconds)
+
+# Cache: set of (sender, timestamp_minute) tuples to avoid burst duplicates
+_processed_cache: set = set()
+
+
+def ts() -> str:
+    return f"{LOG_PREFIX} [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]"
+
+
+# ─── Retry Helper ─────────────────────────────────────────────────────────────
+
+async def with_retry(coro_fn, *args, attempts=MAX_RETRIES, delay=RETRY_DELAY):
+    last_exc = None
+    for attempt in range(1, attempts + 1):
         try:
-            await page.wait_for_selector("div[role='textbox']", timeout=60000) # Wait for chat list or search box
-            print("[WHATSAPP] Login detected / Successful.")
-        except:
-            print("[WHATSAPP] Timeout waiting for login. Please restart and scan QR code quickly.")
-            return
+            return await coro_fn(*args)
+        except Exception as exc:
+            last_exc = exc
+            wait = delay * (2 ** (attempt - 1))
+            print(f"{ts()} ⚠ Attempt {attempt}/{attempts} failed: {exc}. Retry in {wait}s...")
+            await asyncio.sleep(wait)
+    print(f"{ts()} ✗ All {attempts} attempts failed. Last: {last_exc}")
+    return None
 
-        print("[WHATSAPP] Monitoring for new messages...")
-        
-        # Main loop
-        while True:
-            try:
-                # Detect unread badges
-                unread_chats = await page.query_selector_all("span[aria-label*='unread']")
-                
-                for chat_badge in unread_chats:
-                    try:
-                        # Click the chat to open it (careful, this marks as read)
-                        # To be "autonomous" and "monitor", we need to open it to read content.
-                        
-                        # Get parent element that is clickable (the chat row)
-                        chat_row = await chat_badge.xpath("./../../../../..") # Adjust xpath based on current DOM structure which changes often
-                        if chat_row:
-                            await chat_row[0].click()
-                            await asyncio.sleep(1) # Wait for chat to load
-                            
-                            # Get last message
-                            messages = await page.query_selector_all("div.message-in")
-                            if messages:
-                                last_message = messages[-1]
-                                text_element = await last_message.query_selector("span._11JPr") # Class names change, need reliable selector or text content
-                                # Better strategy: Get all text content of the last message container
-                                message_text = await last_message.inner_text()
-                                
-                                # Clean up metadata (time, etc) from text if needed
-                                
-                                print(f"[WHATSAPP] New message detected: {message_text[:50]}...")
-                                
-                                # Auto-response logic for simple messages
-                                if message_text.lower().strip() in ["hi", "hello", "test"]:
-                                    await page.keyboard.type("Auto-reply: Received, processing.")
-                                    await page.keyboard.press("Enter")
-                                    print("[WHATSAPP] Sent auto-reply.")
-                                else:
-                                    # Save to Needs_Action for complex messages
-                                    save_to_needs_action(message_text, "Unknown_Sender") # Sender name extraction is complex, skipping for MVP
-                                
-                                # Go back to list (optional, or just stay)
-                                
-                    except Exception as e:
-                        print(f"[WHATSAPP] Error processing chat: {e}")
-                
-                await asyncio.sleep(5)
-                
-            except Exception as e:
-                print(f"[WHATSAPP] Loop error: {e}")
-                await asyncio.sleep(5)
 
-def save_to_needs_action(text, sender):
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{timestamp}_whatsapp.md"
-    filepath = os.path.join(WATCH_FOLDER, filename)
-    
-    content = f"""---
-type: whatsapp
+# ─── MCP Poll ─────────────────────────────────────────────────────────────────
+
+async def fetch_whatsapp_data(session: aiohttp.ClientSession) -> dict | None:
+    """Call MCP /check-whatsapp and return parsed JSON."""
+    url = f"{MCP_BASE_URL}/check-whatsapp"
+    print(f"{ts()} Polling MCP: {url}")
+    async with session.get(url, timeout=aiohttp.ClientTimeout(total=90)) as resp:
+        resp.raise_for_status()
+        return await resp.json()
+
+
+# ─── .md File Creation ────────────────────────────────────────────────────────
+
+def create_task_md(msg: dict) -> Path | None:
+    """Create a rich Markdown task file in /Needs_Action."""
+    try:
+        NEEDS_ACTION_DIR.mkdir(exist_ok=True)
+
+        sender    = msg.get('sender', 'Unknown')
+        count     = msg.get('count', 1)
+        preview   = msg.get('preview', '(No preview available)')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        now_iso   = datetime.now().isoformat()
+
+        safe_sender = "".join(c if c.isalnum() or c in '-_' else '_' for c in sender[:30])
+        filename    = f"{timestamp}_WhatsApp_{safe_sender}.md"
+        filepath    = NEEDS_ACTION_DIR / filename
+
+        content = f"""---
+type: whatsapp_reply
 sender: "{sender}"
-received: "{datetime.now().isoformat()}"
+unread_count: {count}
+received: "{now_iso}"
+priority: high
 status: pending
 ---
 
-## WhatsApp Message
+## 💬 New WhatsApp Message
 
-**From:** {sender}
-**Content:**
-{text}
+| Field          | Value |
+|----------------|-------|
+| **Sender**     | {sender} |
+| **Unread**     | {count} message(s) |
+| **Detected**   | {now_iso} |
+
+## Message Preview
+
+> {preview}
 
 ---
-*Processed by WhatsApp Watcher*
+
+## 🤖 AI Instruction
+
+You have an unread WhatsApp message from **{sender}**.
+
+Please:
+1. Review the message context above.
+2. Draft a short, friendly, professional reply.
+3. Submit for approval.
+
+**Suggested Reply Template:**
+> Hi {sender}! Thanks for your message. [Your reply here]
+
+**MCP Action:** To send, use:
+```
+POST /send-whatsapp  {{ "contact": "{sender}", "message": "..." }}
+```
+
+---
+*Detected by WhatsApp Watcher at {now_iso}*
 """
-    
-    with open(filepath, 'w', encoding='utf-8') as f:
-        f.write(content)
-    with open(filepath, 'w', encoding='utf-8') as f:
-        f.write(content)
-    print(f"[WHATSAPP] Saved task: {filename}")
 
-async def send_message(contact, message):
-    print(f"[WHATSAPP] Starting WhatsApp Sender... To: {contact}")
-    async with async_playwright() as p:
-        # Launch browser with persistent context
-        browser = await p.chromium.launch_persistent_context(
-            user_data_dir=USER_DATA_DIR,
-            headless=False,
+        filepath.write_text(content, encoding='utf-8')
+        print(f"{ts()} ✓ Created: {filename}")
+        return filepath
+
+    except Exception as exc:
+        print(f"{ts()} ✗ Failed to create .md: {exc}")
+        return None
+
+
+# ─── Trigger Reasoning ────────────────────────────────────────────────────────
+
+async def trigger_reasoning(filepath: Path):
+    """Spawn reasoning_loop.py asynchronously."""
+    if not REASONING_LOOP.exists():
+        print(f"{ts()} ⚠ reasoning_loop.py not found at {REASONING_LOOP}")
+        return
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            sys.executable, str(REASONING_LOOP), str(filepath),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
         )
-        
-        page = await browser.new_page()
-        
-        try:
-            await page.goto("https://web.whatsapp.com/")
-            
-            print("[WHATSAPP] Waiting for login / Search box...")
-            try:
-                await page.wait_for_selector("div[contenteditable='true'][data-tab='3']", timeout=60000) # Search box
-                print("[WHATSAPP] Login detected.")
-            except:
-                print("[WHATSAPP] Not logged in. Please run monitor mode to login first.")
-                return
+        print(f"{ts()} 🧠 Triggered reasoning_loop.py (PID {proc.pid}) for {filepath.name}")
+        asyncio.ensure_future(_wait_proc(proc, filepath.name))
+    except Exception as exc:
+        print(f"{ts()} ✗ Failed to spawn reasoning_loop.py: {exc}")
 
-            # Search for contact
-            search_box = page.locator("div[contenteditable='true'][data-tab='3']")
-            await search_box.click()
-            await search_box.fill(contact)
-            await asyncio.sleep(2)
-            await page.keyboard.press("Enter")
-            
-            # Wait for chat to open (check for message input)
-            message_box_selector = "div[contenteditable='true'][data-tab='10']"
-            try:
-                await page.wait_for_selector(message_box_selector, timeout=10000)
-                print(f"[WHATSAPP] Chat opened for {contact}.")
-            except:
-                print(f"[WHATSAPP] Could not open chat for {contact}.")
-                return
-            
-            # Type message
-            await page.fill(message_box_selector, message)
-            await asyncio.sleep(1)
-            await page.keyboard.press("Enter")
-            
-            print("[WHATSAPP] Message sent.")
-            await asyncio.sleep(3)
 
-        except Exception as e:
-            print(f"[WHATSAPP] Error sending message: {e}")
-
-if __name__ == "__main__":
-    if not os.path.exists(WATCH_FOLDER):
-        os.makedirs(WATCH_FOLDER)
-    
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--send", nargs=2, metavar=('CONTACT', 'MESSAGE'), help="Send a WhatsApp message")
-    args = parser.parse_args()
-
-    if args.send:
-        contact, message = args.send
-        try:
-            asyncio.run(send_message(contact, message))
-        except Exception as e:
-            print(f"[WHATSAPP] Error: {e}")
+async def _wait_proc(proc, name: str):
+    stdout, stderr = await proc.communicate()
+    if proc.returncode == 0:
+        print(f"{ts()} ✓ reasoning_loop done for {name}")
     else:
+        print(f"{ts()} ✗ reasoning_loop error for {name}: {stderr.decode()[:200]}")
+
+
+# ─── History & Status Helpers ─────────────────────────────────────────────────
+
+HISTORY_FILE = BASE_DIR / "whatsapp_history.json"
+STATUS_FILE  = BASE_DIR / "status.json"
+
+def update_heartbeat():
+    try:
+        data = {}
+        if STATUS_FILE.exists():
+            try:
+                data = json.loads(STATUS_FILE.read_text())
+            except: pass
+        
+        data["whatsapp"] = {
+            "status": "online",
+            "last_active": datetime.now().isoformat(),
+            "pid": sys.pid if hasattr(sys, 'pid') else 0
+        }
+        STATUS_FILE.write_text(json.dumps(data, indent=2))
+    except: pass
+
+def append_to_history(msg: dict):
+    """Append new message to history file."""
+    try:
+        history = []
+        if HISTORY_FILE.exists():
+            try:
+                history = json.loads(HISTORY_FILE.read_text())
+            except: pass
+        
+        # Add new item
+        history.insert(0, {
+            "sender": msg.get('sender', 'Unknown'),
+            "count": msg.get('count', 1),
+            "preview": msg.get('preview', '')[:100],
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        # Keep last 50
+        history = history[:50]
+        HISTORY_FILE.write_text(json.dumps(history, indent=2))
+    except Exception as e:
+        print(f"{ts()} ⚠ History update failed: {e}")
+
+# ─── Core Check ───────────────────────────────────────────────────────────────
+
+async def check_whatsapp(session: aiohttp.ClientSession):
+    """Run one WhatsApp poll cycle with retry."""
+
+    async def _do_check():
+        update_heartbeat()
+        data = await fetch_whatsapp_data(session)
+
+        if not data:
+            return
+
+        messages = data.get('new_messages', [])
+
+        if not messages:
+            print(f"{ts()} No new WhatsApp messages.")
+            return
+
+        print(f"{ts()} Found {len(messages)} chat(s) with unread messages.")
+
+        for msg in messages:
+            sender = msg.get('sender', 'Unknown')
+            # Cache key: sender + current minute (allows re-alerting after ~1 min)
+            minute_key = datetime.now().strftime('%Y%m%d_%H%M')
+            cache_key  = f"{sender}|{minute_key}"
+
+            if cache_key in _processed_cache:
+                print(f"{ts()} ⏭ Skipping duplicate: {sender} (already processed this minute)")
+                continue
+
+            _processed_cache.add(cache_key)
+            append_to_history(msg)  # <--- SAVE TO HISTORY
+            
+            md_path = create_task_md(msg)
+            if md_path:
+                await trigger_reasoning(md_path)
+
+    result = await with_retry(_do_check)
+    if result is None:
+        print(f"{ts()} ⚠ Check skipped after all retries.")
+
+
+# ─── Main Daemon Loop ─────────────────────────────────────────────────────────
+
+async def async_main():
+    print(f"{ts()} 🚀 WhatsApp Watcher starting (polling every {POLL_INTERVAL}s)...")
+    print(f"{ts()} MCP Server: {MCP_BASE_URL}")
+
+    # Wait for MCP server to be ready
+    print(f"{ts()} Waiting for MCP server...")
+    for _ in range(6):
         try:
-            asyncio.run(monitor_whatsapp())
-        except KeyboardInterrupt:
-            print("[WHATSAPP] Stopped.")
+            async with aiohttp.ClientSession() as s:
+                async with s.get(MCP_BASE_URL, timeout=aiohttp.ClientTimeout(total=5)) as r:
+                    if r.status == 200:
+                        print(f"{ts()} ✓ MCP server is up.")
+                        break
+        except Exception:
+            await asyncio.sleep(5)
+    else:
+        print(f"{ts()} ⚠ MCP server not reachable. Proceeding anyway (will retry each poll).")
+
+    # Main poll loop
+    connector = aiohttp.TCPConnector(limit=5)
+    async with aiohttp.ClientSession(connector=connector) as session:
+        while True:
+            await check_whatsapp(session)
+            print(f"{ts()} ⏳ Waiting {POLL_INTERVAL}s...")
+            await asyncio.sleep(POLL_INTERVAL)
+
+
+def main():
+    try:
+        import json # Ensure json is imported
+        asyncio.run(async_main())
+    except KeyboardInterrupt:
+        print(f"\n{ts()} 💤 WhatsApp Watcher stopped.")
+
+
+if __name__ == '__main__':
+    main()

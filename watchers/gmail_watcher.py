@@ -1,36 +1,34 @@
 """
-Gmail Watcher - Monitors Gmail for new important emails
+Gmail Watcher — Async Optimized (Silver Tier)
+=============================================
+Monitors Gmail for new unread emails using the Gmail API.
+On detection: saves rich .md to /Needs_Action and spawns reasoning_loop.py.
 
-This script uses the Google Gmail API to monitor a Gmail account for new unread emails,
-particularly focusing on important messages. When new emails are detected, it creates
-a markdown file in the /Needs_Action folder with proper YAML frontmatter for processing.
+Optimizations:
+  - asyncio event loop (async-native where possible)
+  - 30-second rate limit between checks
+  - In-memory cache of seen message IDs (avoids reprocessing)
+  - 3-attempt retry with exponential back-off for API errors
+  - Timestamped logging throughout
 
-Installation Instructions:
-1. Enable Gmail API in Google Cloud Console
-2. Download credentials.json from Google Cloud Console
-3. Install required packages: pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
-
-Usage Instructions:
-1. Place credentials.json in the same directory as this script
-2. Run the script: python gmail_watcher.py
-3. Authorize the application in your browser when prompted
-4. The script will continuously monitor for new emails
-
-Testing Instructions:
-1. Send yourself a test email with "Test" in the subject
-2. Run the script and verify it detects the email
-3. Check that a corresponding .md file appears in /Needs_Action/
+Usage:
+  python gmail_watcher.py            # continuous daemon (async loop)
+  python gmail_watcher.py --once     # run once and exit
+  python gmail_watcher.py --draft TO SUBJECT BODY
+  python gmail_watcher.py --send  TO SUBJECT BODY
 """
 
 import os
+import sys
+import asyncio
+import subprocess
 import pickle
 import time
-from datetime import datetime
-from pathlib import Path
+import argparse
 import base64
 import json
-import argparse
-import sys
+from datetime import datetime
+from pathlib import Path
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -38,7 +36,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# Scopes required for reading, sending, and drafting Gmail
+# ─── Configuration ────────────────────────────────────────────────────────────
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.send',
@@ -46,322 +44,401 @@ SCOPES = [
     'https://www.googleapis.com/auth/gmail.modify'
 ]
 
-def authenticate_gmail():
-    """
-    Authenticate and return Gmail service object
-    """
-    creds = None
-    
-    # Define base directory
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    CREDENTIALS_FILE = os.path.join(BASE_DIR, 'credentials.json')
-    TOKEN_FILE = os.path.join(BASE_DIR, 'token.pickle')
+BASE_DIR         = Path(__file__).resolve().parent
+CREDENTIALS_FILE = BASE_DIR / 'credentials.json'
+TOKEN_FILE       = BASE_DIR / 'token.pickle'
+NEEDS_ACTION_DIR = BASE_DIR.parent / 'Needs_Action'
+REASONING_LOOP   = BASE_DIR / 'reasoning_loop.py'
+LOG_PREFIX       = "[GMAIL]"
 
-    # Token file stores the user's access and refresh tokens
-    if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, 'rb') as token:
-            creds = pickle.load(token)
-    
-    # If there are no valid credentials, request authorization
+POLL_INTERVAL    = 30          # seconds between checks
+MAX_RETRIES      = 3           # retry attempts for transient errors
+RETRY_DELAY      = 5           # base delay (seconds) for back-off
+MAX_EMAILS       = 10          # max emails fetched per check
+
+# In-memory seen IDs (reset on restart — designed for daemon use)
+_seen_ids: set = set()
+
+
+def ts() -> str:
+    """Return a timestamped log prefix."""
+    return f"{LOG_PREFIX} [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]"
+
+
+# ─── Authentication ───────────────────────────────────────────────────────────
+
+def authenticate_gmail():
+    """Authenticate and return a Gmail API service object."""
+    creds = None
+
+    if TOKEN_FILE.exists():
+        with open(TOKEN_FILE, 'rb') as f:
+            creds = pickle.load(f)
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
+            print(f"{ts()} Refreshing expired token...")
             creds.refresh(Request())
         else:
-            if not os.path.exists(CREDENTIALS_FILE):
-                 raise FileNotFoundError(f"Credentials file not found at {CREDENTIALS_FILE}")
-                 
-            flow = InstalledAppFlow.from_client_secrets_file(
-                CREDENTIALS_FILE, SCOPES)
+            if not CREDENTIALS_FILE.exists():
+                raise FileNotFoundError(f"credentials.json not found at {CREDENTIALS_FILE}")
+            flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_FILE), SCOPES)
             creds = flow.run_local_server(port=0)
-        
-        # Save credentials for next run
-        with open(TOKEN_FILE, 'wb') as token:
-            pickle.dump(creds, token)
-    
+
+        with open(TOKEN_FILE, 'wb') as f:
+            pickle.dump(creds, f)
+
+    print(f"{ts()} Authenticated with Gmail API ✓")
     return build('gmail', 'v1', credentials=creds)
 
-def decode_email_body(message_part):
-    """
-    Decode email body from base64 encoding
-    """
-    if 'data' in message_part['body']:
-        encoded_data = message_part['body']['data']
-        decoded_bytes = base64.urlsafe_b64decode(encoded_data)
-        decoded_str = decoded_bytes.decode('utf-8')
-        return decoded_str
-    return ""
 
-def get_email_details(service, msg_id):
+# ─── Retry Decorator ──────────────────────────────────────────────────────────
+
+async def with_retry(coro_fn, *args, attempts=MAX_RETRIES, delay=RETRY_DELAY):
     """
-    Get detailed information about a specific email
+    Retry an async coroutine up to `attempts` times with exponential back-off.
+    coro_fn must be a callable that returns a coroutine.
     """
+    last_exc = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return await coro_fn(*args)
+        except Exception as exc:
+            last_exc = exc
+            wait = delay * (2 ** (attempt - 1))   # 5s, 10s, 20s
+            print(f"{ts()} ⚠ Attempt {attempt}/{attempts} failed: {exc}. Retrying in {wait}s...")
+            await asyncio.sleep(wait)
+    print(f"{ts()} ✗ All {attempts} attempts exhausted. Last error: {last_exc}")
+    return None
+
+
+# ─── Email Helpers ────────────────────────────────────────────────────────────
+
+def _decode_body(part: dict) -> str:
+    """Decode a single email body part from base64."""
+    data = part.get('body', {}).get('data', '')
+    if data:
+        return base64.urlsafe_b64decode(data).decode('utf-8', errors='replace')
+    return ''
+
+
+def _get_email_details(service, msg_id: str) -> dict | None:
+    """Fetch full details for a single email (sync Gmail API call)."""
     try:
-        message = service.users().messages().get(userId='me', id=msg_id, format='full').execute()
-        
-        # Extract headers
-        headers = {header['name'].lower(): header['value'] for header in message['payload']['headers']}
-        
-        # Extract body if available
-        body = ""
-        payload = message.get('payload', {})
+        msg = service.users().messages().get(
+            userId='me', id=msg_id, format='full'
+        ).execute()
+
+        headers = {h['name'].lower(): h['value'] for h in msg['payload']['headers']}
+
+        # Extract body (plain text preferred)
+        body = ''
+        payload = msg.get('payload', {})
         parts = payload.get('parts', [])
-        
+
         if parts:
-            # Look for plain text part
             for part in parts:
                 if part.get('mimeType') == 'text/plain':
-                    body = decode_email_body(part)
+                    body = _decode_body(part)
                     break
-            # If no plain text, try HTML
             if not body:
                 for part in parts:
                     if part.get('mimeType') == 'text/html':
-                        body = decode_email_body(part)
+                        body = _decode_body(part)
                         break
         else:
-            # Single part message
-            body = decode_email_body(payload)
-        
+            body = _decode_body(payload)
+
         return {
-            'id': msg_id,
-            'from': headers.get('from', ''),
-            'to': headers.get('to', ''),
-            'subject': headers.get('subject', ''),
-            'date': headers.get('date', ''),
-            'body': body[:500],  # Limit body length
-            'labels': message.get('labelIds', []),
-            'threadId': message.get('threadId', '')
+            'id':       msg_id,
+            'threadId': msg.get('threadId', ''),
+            'labels':   msg.get('labelIds', []),
+            'from':     headers.get('from', ''),
+            'to':       headers.get('to', ''),
+            'subject':  headers.get('subject', '(No Subject)'),
+            'date':     headers.get('date', ''),
+            'body':     body[:600],
         }
-    except Exception as e:
-        print(f"Error getting email details: {e}")
+    except Exception as exc:
+        print(f"{ts()} ✗ Failed to get email {msg_id}: {exc}")
         return None
 
-def create_message(to, subject, body, thread_id=None):
-    """
-    Create a message for an email.
-    """
-    from email.mime.text import MIMEText
-    
-    message = MIMEText(body)
-    message['to'] = to
-    message['subject'] = subject
-    
-    raw = base64.urlsafe_b64encode(message.as_bytes())
-    raw = raw.decode()
-    
-    result = {'raw': raw}
-    if thread_id:
-        result['threadId'] = thread_id
-        
-    return result
 
-def create_draft(service, email_data):
-    """
-    Create a draft email as a reply.
-    """
-    try:
-        to = email_data['from']
-        subject = f"Re: {email_data['subject']}"
-        body = email_data.get('reply_body', "This is a drafted reply.")
-        thread_id = email_data.get('threadId')
-        
-        message = create_message(to, subject, body, thread_id)
-        draft = service.users().drafts().create(userId='me', body={'message': message}).execute()
-        
-        print(f"Draft created with ID: {draft['id']}")
-        return draft
-    except Exception as e:
-        print(f"Error creating draft: {e}")
-        return None
+# ─── .md File Creation ────────────────────────────────────────────────────────
 
-def send_email(service, email_data):
-    """
-    Send an email.
-    """
+def _create_needs_action_md(email: dict) -> Path | None:
+    """Write a rich Markdown task file to /Needs_Action."""
     try:
-        to = email_data['from']
-        subject = f"Re: {email_data['subject']}"
-        body = email_data.get('reply_body', "This is an automated reply.")
-        thread_id = email_data.get('threadId')
-        
-        message = create_message(to, subject, body, thread_id)
-        sent_message = service.users().messages().send(userId='me', body=message).execute()
-        
-        print(f"Message sent with ID: {sent_message['id']}")
-        return sent_message
-    except Exception as e:
-        print(f"Error sending email: {e}")
-        return None
+        NEEDS_ACTION_DIR.mkdir(exist_ok=True)
+        priority   = 'high' if 'IMPORTANT' in email['labels'] else 'normal'
+        timestamp  = datetime.now().strftime('%Y%m%d_%H%M%S')
+        # Safe filename
+        safe_sub   = "".join(c if c.isalnum() or c in '-_' else '_' for c in email['subject'][:30])
+        filename   = f"{timestamp}_gmail_{safe_sub}.md"
+        filepath   = NEEDS_ACTION_DIR / filename
+        now_iso    = datetime.now().isoformat()
 
-def create_needs_action_file(email_data):
-    """
-    Create a markdown file in /Needs_Action with email data
-    """
-    try:
-        # Determine priority based on labels or other factors
-        priority = 'high' if 'IMPORTANT' in email_data['labels'] else 'normal'
-        
-        # Create filename based on timestamp and source as requested
-        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{timestamp_str}_gmail.md"
-        
-        # Ensure /Needs_Action directory exists
-        needs_action_dir = Path("../Needs_Action")
-        needs_action_dir.mkdir(exist_ok=True)
-        
-        filepath = needs_action_dir / filename
-        
-        # Create YAML frontmatter
-        yaml_frontmatter = f"""---
+        content = f"""---
 type: email
-from: "{email_data['from']}"
-subject: "{email_data['subject']}"
-received: "{datetime.now().isoformat()}"
+from: "{email['from']}"
+subject: "{email['subject']}"
+thread_id: "{email['threadId']}"
+labels: {json.dumps(email['labels'])}
+received: "{now_iso}"
 priority: {priority}
 status: pending
 ---
 
 ## Email Details
 
-**From:** {email_data['from']}
-**Subject:** {email_data['subject']}
-**Date:** {email_data['date']}
+| Field   | Value |
+|---------|-------|
+| **From**    | {email['from']} |
+| **Subject** | {email['subject']} |
+| **Date**    | {email['date']} |
+| **Labels**  | {', '.join(email['labels'])} |
 
-## Body Preview
+## Message Preview
 
-{email_data['body']}
+{email['body']}
 
 ---
-*Processed by Gmail Watcher at {datetime.now().isoformat()}*
+
+## 🤖 AI Instruction
+
+Analyze this email and decide:
+1. Is a reply needed? (Yes/No)
+2. If yes, draft a professional reply addressing the sender's request.
+3. If urgent (priority={priority}), flag it.
+
+Suggested reply format:
+> Dear [Name], ...
+
+---
+*Detected by Gmail Watcher at {now_iso}*
 """
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(yaml_frontmatter)
-        
-        print(f"Created file: {filepath} for email from {email_data['from']}")
+
+        filepath.write_text(content, encoding='utf-8')
+        print(f"{ts()} ✓ Created: {filename}")
         return filepath
-    
-    except Exception as e:
-        print(f"Error creating needs action file: {e}")
+
+    except Exception as exc:
+        print(f"{ts()} ✗ Failed to create .md for '{email['subject']}': {exc}")
         return None
 
-def check_new_emails(service):
-    """
-    Check for new unread emails and process them
-    """
+
+# ─── Trigger Reasoning Loop ───────────────────────────────────────────────────
+
+async def _trigger_reasoning(filepath: Path):
+    """Spawn reasoning_loop.py as a background subprocess (async)."""
+    if not REASONING_LOOP.exists():
+        print(f"{ts()} ⚠ reasoning_loop.py not found at {REASONING_LOOP}")
+        return
     try:
-        # Query for unread emails
-        results = service.users().messages().list(
-            userId='me',
-            q='is:unread',
-            maxResults=10  # Limit to last 10 unread emails
+        proc = await asyncio.create_subprocess_exec(
+            sys.executable, str(REASONING_LOOP), str(filepath),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        print(f"{ts()} 🧠 Triggered reasoning_loop.py for {filepath.name} (PID {proc.pid})")
+        # Let it run in background — don't await here
+        asyncio.ensure_future(_wait_reasoning(proc, filepath.name))
+    except Exception as exc:
+        print(f"{ts()} ✗ Failed to spawn reasoning_loop.py: {exc}")
+
+
+async def _wait_reasoning(proc, name: str):
+    """Awaits a reasoning subprocess and logs its result."""
+    stdout, stderr = await proc.communicate()
+    if proc.returncode == 0:
+        print(f"{ts()} ✓ reasoning_loop completed for {name}")
+    else:
+        print(f"{ts()} ✗ reasoning_loop error for {name}: {stderr.decode()[:200]}")
+
+
+# ─── Core Async Check Logic ───────────────────────────────────────────────────
+
+async def check_for_new_emails(service):
+    """Async-wrapped email check: fetches unread emails, creates .md files."""
+
+    async def _do_check():
+        print(f"{ts()} Checking for new unread emails...")
+        # Gmail API call (sync) run in executor to not block event loop
+        loop = asyncio.get_event_loop()
+        results = await loop.run_in_executor(
+            None,
+            lambda: service.users().messages().list(
+                userId='me', q='is:unread', maxResults=MAX_EMAILS
+            ).execute()
+        )
+
+        messages = results.get('messages', [])
+        new = [m for m in messages if m['id'] not in _seen_ids]
+
+        if not new:
+            print(f"{ts()} No new unread emails.")
+            return
+
+        print(f"{ts()} Found {len(new)} new email(s).")
+
+        for msg in new:
+            _seen_ids.add(msg['id'])
+
+            # Fetch details in executor
+            details = await loop.run_in_executor(
+                None, _get_email_details, service, msg['id']
+            )
+            if not details:
+                continue
+
+            # Create the .md task file
+            md_path = _create_needs_action_md(details)
+
+            if md_path:
+                # Mark email as read
+                await loop.run_in_executor(
+                    None,
+                    lambda mid=msg['id']: service.users().messages().modify(
+                        userId='me', id=mid,
+                        body={'removeLabelIds': ['UNREAD']}
+                    ).execute()
+                )
+                # Trigger AI reasoning
+                await _trigger_reasoning(md_path)
+
+    return await with_retry(_do_check)
+
+
+# ─── Draft / Send Helpers (CLI Actions) ───────────────────────────────────────
+
+def create_draft(service, to: str, subject: str, body: str):
+    """Create a Gmail draft."""
+    from email.mime.text import MIMEText
+    msg = MIMEText(body)
+    msg['to']      = to
+    msg['subject'] = subject
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    try:
+        draft = service.users().drafts().create(
+            userId='me', body={'message': {'raw': raw}}
         ).execute()
+        print(f"{ts()} ✓ Draft created: {draft['id']}")
+    except Exception as exc:
+        print(f"{ts()} ✗ Draft failed: {exc}")
+
+
+def send_email(service, to: str, subject: str, body: str):
+    """Send a Gmail message immediately."""
+    from email.mime.text import MIMEText
+    msg = MIMEText(body)
+    msg['to']      = to
+    msg['subject'] = subject
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    try:
+        sent = service.users().messages().send(
+            userId='me', body={'raw': raw}
+        ).execute()
+        print(f"{ts()} ✓ Email sent: {sent['id']}")
+    except Exception as exc:
+        print(f"{ts()} ✗ Send failed: {exc}")
+
+
+# ─── History & Status Helpers ─────────────────────────────────────────────────
+
+HISTORY_FILE = BASE_DIR / "gmail_history.json"
+STATUS_FILE  = BASE_DIR / "status.json"
+
+def update_heartbeat():
+    """Update status.json with current timestamp."""
+    try:
+        data = {}
+        if STATUS_FILE.exists():
+            try:
+                data = json.loads(STATUS_FILE.read_text())
+            except: pass
         
+        data["gmail"] = {
+            "status": "online",
+            "last_active": datetime.now().isoformat(),
+            "pid": os.getpid()
+        }
+        STATUS_FILE.write_text(json.dumps(data, indent=2))
+    except Exception as e:
+        print(f"{ts()} ⚠ Failed to update heartbeat: {e}")
+
+def sync_history(service):
+    """Fetch last 15 emails (read or unread) for dashboard history."""
+    try:
+        results = service.users().messages().list(userId='me', maxResults=15).execute()
         messages = results.get('messages', [])
         
-        if not messages:
-            print("No new unread emails found.")
-            return
-        
-        print(f"Found {len(messages)} new unread emails")
-        
+        history = []
         for msg in messages:
-            email_details = get_email_details(service, msg['id'])
-            
-            if email_details:
-                # Create needs action file for the email
-                create_needs_action_file(email_details)
-                
-                # Mark as read after processing
-                service.users().messages().modify(
-                    userId='me',
-                    id=msg['id'],
-                    body={'removeLabelIds': ['UNREAD']}
-                ).execute()
-                
-                print(f"Processed and marked as read: {email_details['subject']}")
-    
-    except HttpError as error:
-        print(f"Gmail API error: {error}")
+            details = _get_email_details(service, msg['id'])
+            if details:
+                # Simplify for frontend
+                history.append({
+                    "id": details['id'],
+                    "from": details['from'],
+                    "subject": details['subject'],
+                    "snippet": details['body'][:100],
+                    "date": details['date'],
+                    "timestamp": datetime.now().isoformat() # Approx
+                })
+        
+        HISTORY_FILE.write_text(json.dumps(history, indent=2))
+        print(f"{ts()} ↻ Synced {len(history)} emails to history.")
+    except Exception as e:
+        print(f"{ts()} ⚠ History sync failed: {e}")
 
-def parse_arguments():
-    """
-    Parse command line arguments
-    """
-    parser = argparse.ArgumentParser(description='Gmail Watcher and Action Executor')
-    
-    # Action arguments
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--check', action='store_true', help='Check for new emails (default)')
-    group.add_argument('--draft', nargs=3, metavar=('TO', 'SUBJECT', 'BODY'), help='Create a draft email')
-    group.add_argument('--send', nargs=3, metavar=('TO', 'SUBJECT', 'BODY'), help='Send an email immediately')
-    
-    return parser.parse_args()
+# ─── Main Async Loop ──────────────────────────────────────────────────────────
+
+async def async_main(args):
+    service = authenticate_gmail()
+
+    if args.draft:
+        to, subject, body = args.draft
+        create_draft(service, to, subject, body)
+
+    elif args.send:
+        to, subject, body = args.send
+        send_email(service, to, subject, body)
+
+    elif args.once:
+        print(f"{ts()} Running once...")
+        await check_for_new_emails(service)
+        sync_history(service)
+        update_heartbeat()
+
+    else:
+        print(f"{ts()} 🚀 Starting continuous daemon (check every {POLL_INTERVAL}s)...")
+        # Initial sync
+        sync_history(service)
+        
+        while True:
+            update_heartbeat()
+            await check_for_new_emails(service)
+            
+            # Sync history every 5 loops (approx 2.5 mins) to save API quota
+            # For now, just sync on start. Real-time new emails are handled by check_for_new_emails
+            
+            print(f"{ts()} ⏳ Waiting {POLL_INTERVAL}s before next check...")
+            await asyncio.sleep(POLL_INTERVAL)
+
 
 def main():
-    """
-    Main function to run the Gmail watcher
-    """
-    args = parse_arguments()
-    
-    print(f"Starting Gmail Watcher... Args: {args}")
-    
-    try:
-        # Authenticate with Gmail
-        service = authenticate_gmail()
-        print("Successfully authenticated with Gmail API")
-        
-        # Handle actions based on arguments
-        if args.draft:
-            to, subject, body = args.draft
-            print(f"Creating draft to {to}...")
-            email_data = {
-                'from': to, # 'from' in email_data logic is used as 'to' in create_message for replies, but here we are sending TO someone. 
-                            # Wait, create_draft uses email_data['from'] as recipient. 
-                            # Let's check create_draft logic:
-                            # to = email_data['from']
-                            # subject = f"Re: {email_data['subject']}"
-                            # So it assumes it's a REPLY.
-                            # We need to adapt create_draft or pass data carefully.
-                            # Let's adjust the dictionary we pass to match expected keys or modify create_draft.
-                            # The current create_draft is designed for replies.
-                            # Let's try to fit the existing function:
-                'from': to,  # This will be used as the recipient
-                'subject': subject.replace("Re: ", ""), # create_draft adds "Re: "
-                'reply_body': body
-            }
-            # create_draft also expects 'threadId' optionally.
-            
-            # NOTE: The existing create_draft function prefixes "Re: " to the subject. 
-            # If the reasoning loop sends a subject that already has "Re: ", it might get doubled.
-            # But for now let's stick to the existing logic to minimize code changes.
-            create_draft(service, email_data)
-            
-        elif args.send:
-            to, subject, body = args.send
-            print(f"Sending email to {to}...")
-            email_data = {
-                'from': to,
-                'subject': subject.replace("Re: ", ""),
-                'reply_body': body
-            }
-            send_email(service, email_data)
-            
-        else:
-            # Default behavior: Continuous monitoring
-            print("Starting continuous monitoring for new emails...")
-            try:
-                while True:
-                    check_new_emails(service)
-                    print("Waiting 60 seconds...")
-                    time.sleep(60)
-            except KeyboardInterrupt:
-                print("\nStopping monitoring.")
-        
-        print("Gmail Watcher action completed.")
-        
-    except Exception as e:
-        print(f"Error in Gmail Watcher: {e}")
+    parser = argparse.ArgumentParser(description='Gmail Watcher — Async Optimized')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--draft', nargs=3, metavar=('TO', 'SUBJECT', 'BODY'), help='Create a draft')
+    group.add_argument('--send',  nargs=3, metavar=('TO', 'SUBJECT', 'BODY'), help='Send email immediately')
+    group.add_argument('--once',  action='store_true', help='Check once and exit')
+    args = parser.parse_args()
 
-if __name__ == "__main__":
+    try:
+        asyncio.run(async_main(args))
+    except KeyboardInterrupt:
+        print(f"\n{ts()} 💤 Gmail Watcher stopped.")
+
+
+if __name__ == '__main__':
     main()
