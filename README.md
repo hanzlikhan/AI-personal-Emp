@@ -1,4 +1,4 @@
-# AI Employee Vault - Bronze Tier
+# AI Employee Vault - Silver Tier
 
 Welcome to the AI Employee Vault, a complete file management and automation system built for the Personal AI Employee Hackathon 0. This system implements a robust workflow for processing files and tasks using AI-powered automation.
 
