@@ -1,0 +1,72 @@
+{
+    "mcpServers": {
+        "silver-tier-mcp": {
+            "url": "http://localhost:3000",
+            "tools": [
+                {
+                    "name": "send_email",
+                    "description": "Send an email via Gmail",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "to": {
+                                "type": "string",
+                                "description": "Recipient email address"
+                            },
+                            "subject": {
+                                "type": "string",
+                                "description": "Email subject"
+                            },
+                            "body": {
+                                "type": "string",
+                                "description": "Email body content"
+                            }
+                        },
+                        "required": [
+                            "to",
+                            "subject",
+                            "body"
+                        ]
+                    }
+                },
+                {
+                    "name": "send_whatsapp",
+                    "description": "Send a WhatsApp message via Web Automation",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "contact": {
+                                "type": "string",
+                                "description": "Name of the contact or phone number"
+                            },
+                            "message": {
+                                "type": "string",
+                                "description": "Message content"
+                            }
+                        },
+                        "required": [
+                            "contact",
+                            "message"
+                        ]
+                    }
+                },
+                {
+                    "name": "post_facebook",
+                    "description": "Create a post on Facebook Feed",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "content": {
+                                "type": "string",
+                                "description": "Text content of the post"
+                            }
+                        },
+                        "required": [
+                            "content"
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}

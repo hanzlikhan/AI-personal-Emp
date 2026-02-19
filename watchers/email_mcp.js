@@ -16,6 +16,11 @@ const port = 3000;
 
 app.use(bodyParser.json());
 
+// Endpoint: Root (Health Check)
+app.get('/', (req, res) => {
+    res.send('Silver Tier MCP Server is Running! 🚀');
+});
+
 // Load environment variables
 function loadEnv() {
     const envPath = path.join(__dirname, '..', '.env');

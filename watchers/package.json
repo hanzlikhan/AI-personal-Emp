@@ -1,0 +1,19 @@
+{
+    "name": "silver-tier-watchers",
+    "version": "1.0.0",
+    "description": "MCP Servers and Watchers for Silver Tier AI Agent",
+    "main": "mcp_server.js",
+    "scripts": {
+        "start": "node mcp_server.js",
+        "start:orchestrator": "python orchestrator.py"
+    },
+    "dependencies": {
+        "body-parser": "^1.20.2",
+        "express": "^4.18.2",
+        "express-rate-limit": "^8.2.1",
+        "nodemailer": "^6.9.7",
+        "playwright": "^1.58.2"
+    },
+    "author": "Silver Tier AI",
+    "license": "ISC"
+}
