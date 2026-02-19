@@ -172,68 +172,60 @@ async def _wait_proc(proc, name: str):
 # ─── History & Status Helpers ─────────────────────────────────────────────────
 
 HISTORY_FILE = BASE_DIR / "whatsapp_history.json"
-STATUS_FILE  = BASE_DIR / "status.json"
+HISTORY_FILE = BASE_DIR / "whatsapp_history.json"
+STATUS_FILE  = BASE_DIR / "status_whatsapp.json"
 
-def update_heartbeat():
+def update_heartbeat(status="online"):
     try:
-        data = {}
-        if STATUS_FILE.exists():
-            try:
-                data = json.loads(STATUS_FILE.read_text())
-            except: pass
-        
-        data["whatsapp"] = {
-            "status": "online",
+        data = {
+            "status": status,
             "last_active": datetime.now().isoformat(),
             "pid": sys.pid if hasattr(sys, 'pid') else 0
         }
         STATUS_FILE.write_text(json.dumps(data, indent=2))
     except: pass
 
-def append_to_history(msg: dict):
-    """Append new message to history file."""
-    try:
-        history = []
-        if HISTORY_FILE.exists():
-            try:
-                history = json.loads(HISTORY_FILE.read_text())
-            except: pass
-        
-        # Add new item
-        history.insert(0, {
-            "sender": msg.get('sender', 'Unknown'),
-            "count": msg.get('count', 1),
-            "preview": msg.get('preview', '')[:100],
-            "timestamp": datetime.now().isoformat()
-        })
-        
-        # Keep last 50
-        history = history[:50]
-        HISTORY_FILE.write_text(json.dumps(history, indent=2))
-    except Exception as e:
-        print(f"{ts()} ⚠ History update failed: {e}")
-
-# ─── Core Check ───────────────────────────────────────────────────────────────
+# ... (sync_history remains same) ...
 
 async def check_whatsapp(session: aiohttp.ClientSession):
     """Run one WhatsApp poll cycle with retry."""
 
     async def _do_check():
-        update_heartbeat()
+        # Default to 'connecting' or 'unknown' before we get a response? 
+        # Actually, let's wait for response.
+        
         data = await fetch_whatsapp_data(session)
-
+        
         if not data:
+            update_heartbeat("offline")
             return
+
+        # Use status from MCP (default to offline if missing)
+        remote_status = data.get('status', 'offline')
+        update_heartbeat(remote_status)
+
+        if remote_status != 'online':
+             # If offline, we might still have a 'headless/visible' session but not logged in.
+             return
 
         messages = data.get('new_messages', [])
+        
+        # 1. Update Dashboard History (Show all chats, read or unread)
+        if messages:
+            sync_history(messages)
 
-        if not messages:
-            print(f"{ts()} No new WhatsApp messages.")
+        # 2. Filter for UNREAD messages for AI Processing
+        unread_messages = [m for m in messages if m.get('count', 0) > 0]
+        
+        # ... (rest of logic) ...
+
+        if not unread_messages:
+            print(f"{ts()} No new unread messages (History updated).")
             return
 
-        print(f"{ts()} Found {len(messages)} chat(s) with unread messages.")
+        print(f"{ts()} Found {len(unread_messages)} unread chat(s).")
 
-        for msg in messages:
+        for msg in unread_messages:
             sender = msg.get('sender', 'Unknown')
             # Cache key: sender + current minute (allows re-alerting after ~1 min)
             minute_key = datetime.now().strftime('%Y%m%d_%H%M')
@@ -244,8 +236,8 @@ async def check_whatsapp(session: aiohttp.ClientSession):
                 continue
 
             _processed_cache.add(cache_key)
-            append_to_history(msg)  # <--- SAVE TO HISTORY
             
+            # Create Task for AI
             md_path = create_task_md(msg)
             if md_path:
                 await trigger_reasoning(md_path)
@@ -258,7 +250,7 @@ async def check_whatsapp(session: aiohttp.ClientSession):
 # ─── Main Daemon Loop ─────────────────────────────────────────────────────────
 
 async def async_main():
-    print(f"{ts()} 🚀 WhatsApp Watcher starting (polling every {POLL_INTERVAL}s)...")
+    print(f"{ts()} [WhatsApp] Watcher starting (polling every {POLL_INTERVAL}s)...")
     print(f"{ts()} MCP Server: {MCP_BASE_URL}")
 
     # Wait for MCP server to be ready

@@ -46,32 +46,35 @@ def check_dependencies():
     import requests
 
 def start_background_process(name, command, cwd):
-    """Starts a process in the background, hidden from view."""
+    """Starts a process in the background, logging output into separate files."""
     log(f"Starting {name} (Background)...", "cyan")
+    log_file = os.path.join(cwd, f"{name.replace(' ', '_').lower()}.log")
+    
     try:
-        if sys.platform == "win32":
-            # STARTUPINFO to hide window
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            startupinfo.wShowWindow = subprocess.SW_HIDE
-            
-            proc = subprocess.Popen(
-                command, 
-                cwd=cwd, 
-                shell=True,
-                creationflags=subprocess.CREATE_NEW_CONSOLE, # Separate console but hidden? No, CREATE_NO_WINDOW
-                startupinfo=startupinfo,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-        else:
-            proc = subprocess.Popen(
-                command, 
-                cwd=cwd, 
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
+        with open(log_file, "w") as f:
+            if sys.platform == "win32":
+                # STARTUPINFO to hide window
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+                
+                proc = subprocess.Popen(
+                    command, 
+                    cwd=cwd, 
+                    shell=True,
+                    creationflags=subprocess.CREATE_NEW_CONSOLE, 
+                    startupinfo=startupinfo,
+                    stdout=f, 
+                    stderr=subprocess.STDOUT 
+                )
+            else:
+                proc = subprocess.Popen(
+                    command, 
+                    cwd=cwd, 
+                    shell=True,
+                    stdout=f,
+                    stderr=subprocess.STDOUT
+                )
         SERVICES[name] = proc
         return proc
     except Exception as e:
@@ -110,51 +113,7 @@ def check_integration(service_name, endpoint):
     except:
         return False
 
-def interactive_setup():
-    """Asking the user to set up integrations sequentially."""
-    log("\n--- INTEGRATION CHECK ---", "yellow")
-    
-    # 1. WhatsApp
-    log("Checking WhatsApp Integration (may take 10s)...", "white")
-    if not check_integration("WhatsApp", "http://localhost:3000/check-whatsapp"):
-        print("\n\033[93m[Action Required] WhatsApp is not connected.\033[0m")
-        choice = input("   Do you want to connect WhatsApp now? (y/n): ").strip().lower()
-        if choice == 'y':
-            log("Launching WhatsApp Web... Please scan QR code in the browser.", "cyan")
-            # Trigger the connect endpoint which keeps browser OPEN
-            try: requests.get("http://localhost:3000/connect-whatsapp", timeout=2) 
-            except: pass
-            
-            input("   Press ENTER once you have scanned the QR code and chats are visible...")
-        else:
-            log("Skipping WhatsApp...", "red")
 
-    # 2. Facebook
-    log("Checking Facebook Integration (may take 10s)...", "white")
-    if not check_integration("Facebook", "http://localhost:3000/check-facebook"):
-        print("\n\033[93m[Action Required] Facebook is not connected.\033[0m")
-        choice = input("   Do you want to connect Facebook now? (y/n): ").strip().lower()
-        if choice == 'y':
-            log("Launching Facebook... Please log in if needed.", "cyan")
-            # Trigger the connect endpoint which keeps browser OPEN
-            try: requests.get("http://localhost:3000/connect-facebook", timeout=2)
-            except: pass
-            
-            input("   Press ENTER once you are logged into Facebook...")
-        else:
-            log("Skipping Facebook...", "red")
-            
-    # 3. Gmail
-    log("Checking Gmail Integration...", "white")
-    # Gmail is handled by python script, so verification is implicit via existence of token.
-    token_path = os.path.join(ROOT_DIR, "watchers", "token.pickle")
-    if os.path.exists(token_path):
-        log("Gmail is authenticated.", "green")
-    else:
-        print("\n\033[93m[Action Required] Gmail is not authenticated.\033[0m")
-        log("The Gmail Watcher will handle authentication when it starts.", "white")
-
-    log("\nIntegrations Verified. Launching Dashboard...", "green")
 
 def cleanup():
     log("\nShutting down...", "red")
@@ -178,25 +137,45 @@ def main():
     os.system("taskkill /f /im node.exe >nul 2>&1")
     
     # 1. Start Core Services (Background)
-    start_background_process("Backend API", f"{sys.executable} -m uvicorn watchers.api:socket_app --port 8000", ROOT_DIR)
+    # Quote the executable path to handle spaces in username
+    python_exe = f'"{sys.executable}"'
+    start_background_process("Backend API", f"{python_exe} -m uvicorn watchers.api:socket_app --port 8000", ROOT_DIR)
     start_background_process("MCP Server", f"node mcp_server.js", WATCHERS_DIR)
 
     log("Waiting for Core Services...", "yellow")
-    if wait_for_endpoint("http://localhost:8000/health") and wait_for_endpoint("http://localhost:3000/health"):
+    log("Waiting for Core Services (up to 60s)...", "yellow")
+    backend_ok = wait_for_endpoint("http://localhost:8000/health", timeout=60)
+    mcp_ok = wait_for_endpoint("http://localhost:3000/health", timeout=60)
+    
+    if backend_ok and mcp_ok:
         log("Core Services Online!", "green")
     else:
-        log("Failed to start core services.", "red")
+        if not backend_ok: log("❌ Backend API failed to respond at http://localhost:8000/health", "red")
+        if not mcp_ok: log("❌ MCP Server failed to respond at http://localhost:3000/health", "red")
+        
+        # Keep window open to see error
+        log("Check the console windows for errors.", "red")
         cleanup()
 
-    # 2. Interactive Integration Check
-    interactive_setup()
+    # 2. Status Check & Instructions
+    log("Checking Integration Status...", "cyan")
+    whatsapp_ok = check_integration("WhatsApp", "http://localhost:3000/check-whatsapp")
+    facebook_ok = check_integration("Facebook", "http://localhost:3000/check-facebook")
+    
+    if whatsapp_ok and facebook_ok:
+        log("✅ All Integrations Active (Headless Mode)", "green")
+    else:
+        log("ℹ  Some integrations are offline. Running in Background.", "white")
+        if not whatsapp_ok: log("   - WhatsApp: Use Dashboard 'Connect' button to scan QR", "yellow")
+        if not facebook_ok: log("   - Facebook: Use Dashboard 'Connect' button to login", "yellow")
 
     # 3. Launch Watchers (Background)
     log("Launching Autonomous Agents...", "cyan")
-    start_background_process("Gmail Watcher", f"{sys.executable} watchers/gmail_watcher.py", ROOT_DIR)
-    start_background_process("WhatsApp Watcher", f"{sys.executable} watchers/whatsapp_watcher.py", ROOT_DIR)
-    start_background_process("Facebook Watcher", f"{sys.executable} watchers/facebook_watcher.py", ROOT_DIR)
-    start_background_process("AI Brain", f"{sys.executable} watchers/reasoning_loop.py", ROOT_DIR)
+    start_background_process("Gmail Watcher", f"{python_exe} watchers/gmail_watcher.py", ROOT_DIR)
+    start_background_process("WhatsApp Watcher", f"{python_exe} watchers/whatsapp_watcher.py", ROOT_DIR)
+    start_background_process("Facebook Watcher", f"{python_exe} watchers/facebook_watcher.py", ROOT_DIR)
+    # Fixed: Run orchestrator.py (daemon) instead of reasoning_loop.py (one-off)
+    start_background_process("AI Brain", f"{python_exe} watchers/orchestrator.py", ROOT_DIR)
 
     # 4. Launch Dashboard
     log("Launching Dashboard...", "cyan")
@@ -205,7 +184,8 @@ def main():
     time.sleep(5)
     webbrowser.open("http://localhost:3008")
     
-    log("\nAll Systems GO! 🚀", "green")
+    log("\nAll Systems GO! 🚀 (Headless Mode)", "green")
+    log("Dashboard: http://localhost:3008", "white")
     log("Press Ctrl+C to stop all services.", "white")
     
     try:

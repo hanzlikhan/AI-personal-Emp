@@ -174,10 +174,11 @@ class DashboardWatcher(FileSystemEventHandler):
             filename = path.name
             folder = path.parent.name
 
-            # Special handling for JSON cache files in watchers root
-            if filename in ["gmail_history.json", "whatsapp_history.json", "facebook_history.json", "status.json"]:
-                # specific event for history/status update
-                if filename == "status.json":
+            # Special handling for JSON cache files
+            if filename in ["gmail_history.json", "whatsapp_history.json", "facebook_history.json", 
+                          "status_gmail.json", "status_whatsapp.json", "status_facebook.json"]:
+                
+                if "status_" in filename:
                     self._safe_emit('status_update', {})
                 elif "history" in filename:
                     service = filename.replace("_history.json", "")
@@ -217,8 +218,8 @@ async def startup():
     observer.schedule(watcher, str(BASE), recursive=False)
     
     observer.start()
-    print("✅ Silver Tier Backend running — watching all directories & caches")
-    print(f"📁 Root: {BASE}")
+    print("[Silver Tier] Backend running — watching all directories & caches")
+    print(f"[Root] {BASE}")
 
 
 # ─── Models ────────────────────────────────────────────────────────────────────
@@ -250,12 +251,24 @@ async def get_stats():
 
 @app.get("/status")
 async def get_status():
-    f = BASE / "status.json"
-    if f.exists():
-        try:
-            return json.loads(f.read_text())
-        except: pass
-    return {}
+    """Aggregate status from individual service files."""
+    status = {}
+    for service in ["gmail", "whatsapp", "facebook"]:
+        f = BASE / f"status_{service}.json"
+        if f.exists():
+            try:
+                data = json.loads(f.read_text())
+                # If file contains { "gmail": { ... } } extract inner or merge
+                if service in data:
+                    status[service] = data[service]
+                else:
+                    # If file is just { "status": "online", ... }
+                    status[service] = data
+            except: 
+                status[service] = {"status": "offline"}
+        else:
+            status[service] = {"status": "offline"}
+    return status
 
 @app.get("/history/{service}")
 async def get_history(service: str):
@@ -369,29 +382,24 @@ priority: high
 
 @app.post("/connect/{service}")
 async def connect_service(service: str):
-    """Trigger on-demand connection for a service."""
-    # Logic: Fire a request to the MCP server OR just rely on the frontend 
-    # finding that the service is now checking.
-    # Actually, we can just trigger the check endpoint on the MCP server 
-    # which will launch the browser if not open.
+    """Trigger on-demand connection for a service using /connect-* endpoints."""
     
     if service in ["whatsapp", "facebook"]:
         # MCP Server is on port 3000
         try:
             import aiohttp
             async with aiohttp.ClientSession() as session:
-                # This endpoint on MCP server triggers the check/launch logic
-                url = f"http://localhost:3000/check-{service}"
-                async with session.get(url) as resp:
+                # FIXED: Use /connect-{service} to keep browser open
+                url = f"http://localhost:3000/connect-{service}"
+                async with session.get(url, timeout=5) as resp:
                     return await resp.json()
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to trigger {service}: {e}")
+            # raise HTTPException(status_code=500, detail=f"Failed to trigger {service}: {e}")
+            return {"status": "error", "error": str(e)}
     
     elif service == "gmail":
-        # Gmail is python based. We can trigger a one-off check?
-        # Or just tell user to check terminal. 
-        # For now, just return ok as gmail watcher is autonomous.
-        return {"status": "triggered", "message": "Gmail watcher is running in background"}
+        # Gmail is python based. 
+        return {"status": "triggered", "message": "Gmail watcher is managed automatically."}
 
     return {"status": "unknown_service"}
 

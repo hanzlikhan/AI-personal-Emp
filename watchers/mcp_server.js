@@ -1,36 +1,11 @@
-/**
- * Silver Tier — Optimized Unified MCP Server
- * ============================================
- * Optimizations:
- *   - express-rate-limit  (per-endpoint throttling)
- *   - withRetry()         (3 attempts, exponential back-off)
- *   - Session cache       (persistent Playwright contexts, no open/close per call)
- *   - Structured JSON logging
- *   - Health endpoint
- *
- * Endpoints (Action):
- *   POST /send-email             { to, subject, body }
- *   POST /send-whatsapp          { contact, message }
- *   POST /post-facebook          { content }
- *   POST /accept-friend-facebook { user_id }
- *   POST /reject-friend-facebook { user_id }
- *   POST /send-facebook-message  { recipient, message }
- *
- * Endpoints (Monitoring):
- *   GET  /check-whatsapp
- *   GET  /check-facebook
- *   GET  /health
- */
-
 'use strict';
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
-const rateLimit = require('express-rate-limit');
 const { chromium } = require('playwright');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.MCP_PORT || 3000;
@@ -38,130 +13,97 @@ const START_TIME = Date.now();
 
 app.use(bodyParser.json());
 
-// ─── Structured Logging ───────────────────────────────────────────────────────
+// ─── configuration ────────────────────────────────────────────────────────────
+const USER_DATA_WA = path.join(__dirname, 'whatsapp_user_data');
+const USER_DATA_FB = path.join(__dirname, 'facebook_user_data');
+
+// ─── Global State (Persistent Sessions) ──────────────────────────────────────
+const SERVICES = {
+    whatsapp: { context: null, page: null, type: 'whatsapp', userData: USER_DATA_WA, url: 'https://web.whatsapp.com/' },
+    facebook: { context: null, page: null, type: 'facebook', userData: USER_DATA_FB, url: 'https://www.facebook.com/' }
+};
+
+// ─── Logger ──────────────────────────────────────────────────────────────────
 function log(endpoint, status, detail = '') {
     const entry = {
         ts: new Date().toISOString(),
         endpoint,
-        status,   // 'start' | 'ok' | 'error' | 'rate_limited'
-        detail,
+        status,
+        detail
     };
     console.log(JSON.stringify(entry));
+    try {
+        fs.appendFileSync(path.join(__dirname, 'mcp_server.log'), JSON.stringify(entry) + '\n');
+    } catch (_) { }
 }
 
 // ─── .env Loader ──────────────────────────────────────────────────────────────
 function loadEnv() {
     const envPath = path.join(__dirname, '..', '.env');
-    if (!fs.existsSync(envPath)) {
-        log('startup', 'error', `.env not found at ${envPath}`);
-        return;
-    }
+    if (!fs.existsSync(envPath)) return;
     fs.readFileSync(envPath, 'utf-8').split('\n').forEach(line => {
         const m = line.match(/^\s*([^=#\s][^=]*)=(.*)$/);
-        if (m) {
-            const k = m[1].trim();
-            const v = m[2].trim().replace(/^['"]/, '').replace(/['"]$/, '');
-            process.env[k] = v;
-        }
+        if (m) process.env[m[1].trim()] = m[2].trim().replace(/^['"]/, '').replace(/['"]$/, '');
     });
 }
 loadEnv();
-log('startup', 'ok', `GMAIL_USER=${process.env.GMAIL_USER ? 'set' : 'MISSING'}, GMAIL_PASS=${process.env.GMAIL_APP_PASSWORD ? 'set' : 'MISSING'}`);
 
-// ─── Rate Limiters ────────────────────────────────────────────────────────────
-const emailLimiter = rateLimit({
-    windowMs: 60_000,   // 1 minute
-    max: 5,
-    standardHeaders: true,
-    handler: (req, res) => {
-        log('/send-email', 'rate_limited', `IP: ${req.ip}`);
-        res.status(429).json({ success: false, error: 'Rate limit: max 5 emails/min' });
-    },
-});
+// ─── Browser Management ──────────────────────────────────────────────────────
 
-const browserLimiter = rateLimit({
-    windowMs: 30_000,   // 30 seconds
-    max: 10,
-    standardHeaders: true,
-    handler: (req, res) => {
-        const ep = req.path;
-        log(ep, 'rate_limited', `IP: ${req.ip}`);
-        res.status(429).json({ success: false, error: 'Rate limit: max 10 browser calls/30s' });
-    },
-});
+async function launchService(serviceName, headless = true) {
+    const svc = SERVICES[serviceName];
+    log(`session:${serviceName}`, 'start', `Launching context (Headless: ${headless})`);
 
-app.use('/send-email', emailLimiter);
-app.use('/send-whatsapp', browserLimiter);
-app.use('/post-facebook', browserLimiter);
-app.use('/accept-friend-facebook', browserLimiter);
-app.use('/reject-friend-facebook', browserLimiter);
-app.use('/send-facebook-message', browserLimiter);
-app.use('/check-whatsapp', browserLimiter);
-app.use('/check-facebook', browserLimiter);
-
-// ─── Retry + Sleep Helpers ────────────────────────────────────────────────────
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-async function withRetry(fn, attempts = 3, baseDelayMs = 2000) {
-    let lastErr;
-    for (let i = 0; i < attempts; i++) {
-        try {
-            return await fn();
-        } catch (e) {
-            lastErr = e;
-            if (i < attempts - 1) {
-                const delay = baseDelayMs * Math.pow(2, i);  // 2s → 4s → 8s
-                log('withRetry', 'error', `Attempt ${i + 1}/${attempts} failed: ${e.message}. Retrying in ${delay}ms`);
-                await sleep(delay);
-            }
+    try {
+        // 1. Close existing if any
+        if (svc.context) {
+            try { await svc.context.close(); } catch (e) { }
+            svc.context = null;
+            svc.page = null;
         }
+
+        // 2. Launch Persistent Context
+        svc.context = await chromium.launchPersistentContext(svc.userData, {
+            headless: headless,
+            viewport: { width: 1280, height: 800 },
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
+        // 3. Get or Create Page
+        const pages = svc.context.pages();
+        if (pages.length > 0) {
+            svc.page = pages[0];
+        } else {
+            svc.page = await svc.context.newPage();
+        }
+
+        // 4. Navigate (Don't wait strictly for networkidle to avoid hanging)
+        await svc.page.goto(svc.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+        log(`session:${serviceName}`, 'ok', `Context active (Headless: ${headless})`);
+        return true;
+    } catch (e) {
+        log(`session:${serviceName}`, 'error', `Launch failed: ${e.message}`);
+        return false;
     }
-    throw lastErr;
 }
 
-// ─── Persistent Session Cache ─────────────────────────────────────────────────
-/**
- * Instead of opening+closing a Playwright context on every request,
- * we cache them keyed by 'whatsapp' | 'facebook'.
- * On first call: launch & cache. On subsequent calls: reuse.
- * If the cached context crashes/closes, we re-create it.
- */
-const sessionCache = {};
+async function getPage(serviceName) {
+    const svc = SERVICES[serviceName];
 
-const USER_DATA_WA = path.join(__dirname, 'whatsapp_user_data');
-const USER_DATA_FB = path.join(__dirname, 'facebook_user_data');
-
-async function getSession(key, userDataDir) {
-    if (sessionCache[key]) {
-        try {
-            // Quick health check — list pages. Throws if context is closed.
-            sessionCache[key].pages();
-            log(`session:${key}`, 'ok', 'Reusing cached context');
-            return sessionCache[key];
-        } catch (_) {
-            log(`session:${key}`, 'error', 'Cached context dead, recreating');
-            delete sessionCache[key];
-        }
+    // Case 1: Browser was closed manually by user or crashed
+    if (svc.context && (svc.page.isClosed() || !svc.context.pages().length)) {
+        log(`session:${serviceName}`, 'warn', 'Page/Context closed unexpectedly. Relauching Headless...');
+        await launchService(serviceName, true);
     }
-    log(`session:${key}`, 'start', `Launching new persistent context: ${userDataDir}`);
-    const ctx = await chromium.launchPersistentContext(userDataDir, {
-        headless: false,
-        viewport: { width: 1280, height: 720 },
-        args: ['--disable-blink-features=AutomationControlled'],
-    });
-    ctx.on('close', () => {
-        log(`session:${key}`, 'error', 'Context closed unexpectedly, clearing cache');
-        delete sessionCache[key];
-    });
-    sessionCache[key] = ctx;
-    return ctx;
-}
 
-/** Get a fresh page within a cached session. */
-async function getPage(sessionKey, userDataDir) {
-    const ctx = await getSession(sessionKey, userDataDir);
-    const page = await ctx.newPage();
-    return page;
+    // Case 2: Never started
+    if (!svc.context) {
+        log(`session:${serviceName}`, 'info', 'Context not running. Launching Headless...');
+        await launchService(serviceName, true);
+    }
+
+    return svc.page;
 }
 
 // ─── Email Transporter ────────────────────────────────────────────────────────
@@ -173,47 +115,160 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//  ENDPOINTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// ─── Health Check ─────────────────────────────────────────────────────────────
-app.get('/', (req, res) => {
-    res.send('Silver Tier MCP Server Running! Endpoints: /health, /send-email, /send-whatsapp, /post-facebook, /accept-friend-facebook, /reject-friend-facebook, /send-facebook-message, /check-whatsapp, /check-facebook');
-});
+// ─── Endpoints ───────────────────────────────────────────────────────────────
 
 app.get('/health', (req, res) => {
-    const sessions = {};
-    for (const key of ['whatsapp', 'facebook']) {
-        if (sessionCache[key]) {
-            try { sessionCache[key].pages(); sessions[key] = 'cached'; }
-            catch (_) { sessions[key] = 'stale'; }
-        } else {
-            sessions[key] = 'none';
-        }
-    }
     res.json({
         status: 'ok',
-        uptime: Math.round((Date.now() - START_TIME) / 1000),
-        sessions,
-        gmail: process.env.GMAIL_USER ? 'configured' : 'missing',
+        services: {
+            whatsapp: !!SERVICES.whatsapp.context,
+            facebook: !!SERVICES.facebook.context
+        },
+        uptime: Math.round((Date.now() - START_TIME) / 1000)
     });
 });
 
-// ─── 1. Send Email ────────────────────────────────────────────────────────────
+// ─── WhatsApp ───
+
+app.get('/connect-whatsapp', async (req, res) => {
+    // Switch to VISIBLE mode for user interaction
+    const success = await launchService('whatsapp', false);
+    res.json({ success, message: success ? 'WhatsApp launched. Scan QR.' : 'Failed to launch.' });
+});
+
+app.get('/check-whatsapp', async (req, res) => {
+    log('/check-whatsapp', 'start');
+    try {
+        const page = await getPage('whatsapp');
+        if (!page) return res.json({ new_messages: [], status: 'offline' });
+
+        // Evaluate page state
+        const result = await page.evaluate(async () => {
+            // Check Login
+            const loginSelectors = ['#pane-side', '[data-testid="chat-list"]'];
+            const qrSelectors = ['canvas', '[data-testid="qrcode"]'];
+
+            const isLoggedIn = loginSelectors.some(s => document.querySelector(s));
+            const isQrVisible = qrSelectors.some(s => document.querySelector(s));
+
+            if (isQrVisible || !isLoggedIn) return { status: 'offline', new_messages: [] };
+
+            // Wait for chat list (critical fix)
+            const chatSelector = '[data-testid="cell-frame-container"]';
+            // Simple waiter pattern inside evaluate (since we can't use page.waitForSelector easily inside evaluate, handling it via DOM check loop)
+            // Actually, we can just return what we have. If 0, maybe it's still loading.
+            // Better: use page.waitForSelector BEFORE calling evaluate for this.
+
+            return { status: 'online', new_messages: [] }; // Placeholder, scraping happens outside now
+        });
+
+        if (result.status === 'offline') return res.json(result);
+
+        // Scrape Chats (Wait up to 5s for list)
+        try {
+            await page.waitForSelector('[data-testid="cell-frame-container"]', { timeout: 5000 });
+        } catch (e) { /* Ignore timeout, might really have 0 chats or network slow */ }
+
+        const chats = await page.evaluate(() => {
+            const rows = document.querySelectorAll('[data-testid="cell-frame-container"]');
+            const items = [];
+            for (const row of Array.from(rows).slice(0, 15)) {
+                const titleEl = row.querySelector('[data-testid="cell-frame-title"]');
+                const lastMsgEl = row.querySelector('[data-testid="last-msg"]');
+                const badgeEl = row.querySelector('span[aria-label*="unread"]');
+
+                items.push({
+                    sender: titleEl ? titleEl.innerText : 'Unknown',
+                    preview: lastMsgEl ? lastMsgEl.innerText : '',
+                    count: badgeEl ? parseInt(badgeEl.innerText) || 1 : 0
+                });
+            }
+            return items;
+        });
+
+        log('/check-whatsapp', 'ok', `status=online chats=${chats.length}`);
+        res.json({ status: 'online', new_messages: chats });
+
+    } catch (e) {
+        log('/check-whatsapp', 'error', e.message);
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// ─── Facebook ───
+
+app.get('/connect-facebook', async (req, res) => {
+    const success = await launchService('facebook', false);
+    res.json({ success, message: success ? 'Facebook launched. Please login.' : 'Failed to launch.' });
+});
+
+app.get('/check-facebook', async (req, res) => {
+    log('/check-facebook', 'start');
+    try {
+        const page = await getPage('facebook');
+        if (!page) return res.json({ status: 'offline' });
+
+        // Simple scraper for FB (assuming already on a useful page or navigating)
+        // For background monitoring, we assume we are just checking what's visible or quick-checking
+
+        // We will do a quick navigation check if not on a data page
+        if (!page.url().includes('facebook.com')) await page.goto('https://www.facebook.com/');
+
+        const output = { friend_requests: [], messages: [], events: [], status: 'online' };
+
+        // Check Login
+        if (await page.locator('input[name="email"]').count() > 0) {
+            return res.json({ ...output, status: 'offline' });
+        }
+
+        // 1. Friend Requests (Scrape if on page, or go there?)
+        // To be less intrusive, we only scrape if we are there, OR every 5 mins?
+        // For now, let's keep it simple: Go there.
+        await page.goto('https://www.facebook.com/friends/requests', { waitUntil: 'domcontentloaded' });
+
+        const rawReqs = await page.evaluate(() => {
+            const items = [];
+            document.querySelectorAll('div[data-pagelet="FriendingCometFriendRequestsRoot"] div[role="article"]').forEach(card => {
+                const name = card.querySelector('span')?.innerText;
+                if (name) items.push({ name, mutual: 0 });
+            });
+            return items;
+        });
+        if (rawReqs) rawReqs.forEach(r => output.friend_requests.push({ type: 'friend_request', name: r.name, description: 'Friend Request' }));
+
+        // 2. Messages
+        await page.goto('https://www.facebook.com/messages/', { waitUntil: 'domcontentloaded' });
+        const msgs = await page.evaluate(() => {
+            const items = [];
+            document.querySelectorAll('div[role="row"] span[style*="font-weight: bold"]').forEach(el => {
+                items.push({ sender: el.innerText, count: 1 });
+            });
+            return items;
+        });
+        if (msgs) msgs.forEach(m => output.messages.push({ type: 'message', sender: m.sender, count: m.count, preview: 'New Message' }));
+
+        log('/check-facebook', 'ok', `Found ${output.messages.length} msgs`);
+        res.json(output);
+
+    } catch (e) {
+        log('/check-facebook', 'error', e.message);
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// ─── Actions (Email & Others) ───
+
 app.post('/send-email', async (req, res) => {
     const { to, subject, body } = req.body;
     log('/send-email', 'start', `to=${to}`);
-    if (!to || !subject || !body)
-        return res.status(400).json({ success: false, error: 'Missing fields: to, subject, body' });
+    if (!to || !subject || !body) return res.status(400).json({ success: false, error: 'Missing fields' });
 
     try {
-        const info = await withRetry(() => transporter.sendMail({
+        const info = await transporter.sendMail({
             from: process.env.GMAIL_USER,
-            to, subject,
-            text: body,
+            to, subject, text: body,
             html: body.includes('<') ? body : undefined,
-        }));
+        });
         log('/send-email', 'ok', `messageId=${info.messageId}`);
         res.json({ success: true, messageId: info.messageId });
     } catch (e) {
@@ -222,378 +277,21 @@ app.post('/send-email', async (req, res) => {
     }
 });
 
-// ─── 2. Send WhatsApp ─────────────────────────────────────────────────────────
-app.post('/send-whatsapp', async (req, res) => {
-    const { contact, message } = req.body;
-    log('/send-whatsapp', 'start', `contact=${contact}`);
-    if (!contact || !message)
-        return res.status(400).json({ success: false, error: 'Missing fields: contact, message' });
+// ─── Server Start ────────────────────────────────────────────────────────────
 
-    try {
-        const result = await withRetry(async () => {
-            const page = await getPage('whatsapp', USER_DATA_WA);
-            try {
-                await page.goto('https://web.whatsapp.com/', { waitUntil: 'domcontentloaded' });
-                await page.waitForSelector('div[contenteditable="true"][data-tab="3"]', { timeout: 45000 });
+app.listen(PORT, async () => {
+    log('server', 'ok', `Listening on port ${PORT}`);
 
-                const searchBox = page.locator('div[contenteditable="true"][data-tab="3"]');
-                await searchBox.fill(contact);
-                await page.waitForTimeout(2000);
-                await searchBox.press('Enter');
-
-                const msgBoxSel = 'div[contenteditable="true"][data-tab="10"]';
-                await page.waitForSelector(msgBoxSel, { timeout: 8000 });
-                await page.fill(msgBoxSel, message);
-                await page.waitForTimeout(1000);
-                await page.press(msgBoxSel, 'Enter');
-                await page.waitForTimeout(2000);
-                return { success: true, message: 'WhatsApp message sent' };
-            } finally {
-                await page.close();
-            }
-        });
-        log('/send-whatsapp', 'ok', `contact=${contact}`);
-        res.json(result);
-    } catch (e) {
-        log('/send-whatsapp', 'error', e.message);
-        res.status(500).json({ success: false, error: e.message });
-    }
+    // Auto-Launch Headless on Start
+    log('startup', 'info', 'Auto-launching background services...');
+    launchService('whatsapp', true);
+    launchService('facebook', true);
 });
 
-// ─── 3. Post to Facebook Timeline ─────────────────────────────────────────────
-app.post('/post-facebook', async (req, res) => {
-    const { content } = req.body;
-    log('/post-facebook', 'start', `preview=${String(content).slice(0, 60)}`);
-    if (!content)
-        return res.status(400).json({ success: false, error: 'Missing field: content' });
-
-    try {
-        const result = await withRetry(async () => {
-            const page = await getPage('facebook', USER_DATA_FB);
-            try {
-                await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 20000 });
-
-                // Open post composer
-                const openComposer =
-                    page.locator('div[role="button"] span:has-text("What\'s on your mind,")').first();
-                await openComposer.waitFor({ timeout: 12000 });
-                await openComposer.click();
-
-                const editorSel = 'div[role="textbox"][contenteditable="true"]';
-                await page.waitForSelector(editorSel, { timeout: 8000 });
-                await page.fill(editorSel, content);
-                await page.waitForTimeout(1500);
-
-                // Click Post button
-                const postBtn = page.locator('div[aria-label="Post"]');
-                if (await postBtn.isVisible()) {
-                    await postBtn.click();
-                    await page.waitForTimeout(3000);
-                    log('/post-facebook', 'ok', 'Post submitted');
-                    return { success: true, message: 'Posted to Facebook' };
-                } else {
-                    log('/post-facebook', 'ok', 'Post button not found — SIMULATED');
-                    return { success: true, message: 'Posted to Facebook (Simulated — post button not found)' };
-                }
-            } finally {
-                await page.close();
-            }
-        });
-        res.json(result);
-    } catch (e) {
-        log('/post-facebook', 'error', e.message);
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
-
-// ─── 4. Accept Facebook Friend Request ────────────────────────────────────────
-app.post('/accept-friend-facebook', async (req, res) => {
-    const { user_id } = req.body;
-    log('/accept-friend-facebook', 'start', `user_id=${user_id}`);
-    if (!user_id)
-        return res.status(400).json({ success: false, error: 'Missing field: user_id' });
-
-    try {
-        const result = await withRetry(async () => {
-            const page = await getPage('facebook', USER_DATA_FB);
-            try {
-                await page.goto('https://www.facebook.com/friends/requests', { waitUntil: 'domcontentloaded', timeout: 20000 });
-                await page.waitForTimeout(2000);
-
-                let confirmBtn;
-                if (['latest', 'next'].includes(user_id)) {
-                    confirmBtn = page.locator('div[aria-label="Confirm"]').first();
-                } else {
-                    const card = page.locator(`div:has-text("${user_id}")`).first();
-                    confirmBtn = card.locator('div[aria-label="Confirm"]');
-                }
-
-                if (await confirmBtn.isVisible({ timeout: 5000 })) {
-                    await confirmBtn.click();
-                    await page.waitForTimeout(2000);
-                    return { success: true, message: `Accepted friend request for ${user_id}` };
-                }
-                return { success: false, error: `Friend request from ${user_id} not found` };
-            } finally {
-                await page.close();
-            }
-        });
-        log('/accept-friend-facebook', result.success ? 'ok' : 'error', result.message || result.error);
-        res.status(result.success ? 200 : 404).json(result);
-    } catch (e) {
-        log('/accept-friend-facebook', 'error', e.message);
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
-
-// ─── 5. Reject Facebook Friend Request ────────────────────────────────────────
-app.post('/reject-friend-facebook', async (req, res) => {
-    const { user_id } = req.body;
-    log('/reject-friend-facebook', 'start', `user_id=${user_id}`);
-    if (!user_id)
-        return res.status(400).json({ success: false, error: 'Missing field: user_id' });
-
-    try {
-        const result = await withRetry(async () => {
-            const page = await getPage('facebook', USER_DATA_FB);
-            try {
-                await page.goto('https://www.facebook.com/friends/requests', { waitUntil: 'domcontentloaded', timeout: 20000 });
-                await page.waitForTimeout(2000);
-
-                let deleteBtn;
-                if (['latest', 'next'].includes(user_id)) {
-                    deleteBtn = page.locator('div[aria-label="Delete Request"]').first();
-                } else {
-                    const card = page.locator(`div:has-text("${user_id}")`).first();
-                    deleteBtn = card.locator('div[aria-label="Delete Request"]');
-                }
-
-                if (await deleteBtn.isVisible({ timeout: 5000 })) {
-                    await deleteBtn.click();
-                    await page.waitForTimeout(2000);
-                    return { success: true, message: `Rejected friend request from ${user_id}` };
-                }
-                return { success: false, error: `Friend request from ${user_id} not found` };
-            } finally {
-                await page.close();
-            }
-        });
-        log('/reject-friend-facebook', result.success ? 'ok' : 'error', result.message || result.error);
-        res.status(result.success ? 200 : 404).json(result);
-    } catch (e) {
-        log('/reject-friend-facebook', 'error', e.message);
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
-
-// ─── 6. Send Facebook Messenger Message ───────────────────────────────────────
-app.post('/send-facebook-message', async (req, res) => {
-    const { recipient, message } = req.body;
-    log('/send-facebook-message', 'start', `recipient=${recipient}`);
-    if (!recipient || !message)
-        return res.status(400).json({ success: false, error: 'Missing fields: recipient, message' });
-
-    try {
-        const result = await withRetry(async () => {
-            const page = await getPage('facebook', USER_DATA_FB);
-            try {
-                // Go to Messenger search
-                await page.goto(`https://www.facebook.com/messages/t/${encodeURIComponent(recipient)}`, {
-                    waitUntil: 'domcontentloaded', timeout: 20000
-                });
-                await page.waitForTimeout(2000);
-
-                // Type in message input
-                const inputSel = 'div[role="textbox"][aria-label*="message" i], div[contenteditable="true"][data-lexical-editor="true"]';
-                await page.waitForSelector(inputSel, { timeout: 8000 });
-                await page.fill(inputSel, message);
-                await page.waitForTimeout(1000);
-                await page.keyboard.press('Enter');
-                await page.waitForTimeout(2000);
-                return { success: true, message: `Facebook message sent to ${recipient}` };
-            } finally {
-                await page.close();
-            }
-        });
-        log('/send-facebook-message', result.success ? 'ok' : 'error', result.message || result.error);
-        res.json(result);
-    } catch (e) {
-        log('/send-facebook-message', 'error', e.message);
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
-
-// ─── 7. Check WhatsApp (Monitoring) ───────────────────────────────────────────
-app.get('/connect-whatsapp', async (req, res) => {
-    // Launch WhatsApp but DO NOT CLOSE.
-    log('/connect-whatsapp', 'start');
-    try {
-        const page = await getPage('whatsapp', USER_DATA_WA);
-        await page.goto('https://web.whatsapp.com/', { waitUntil: 'domcontentloaded' });
-        // Return immediately, keeping browser open
-        res.json({ success: true, message: 'WhatsApp launched for interaction' });
-    } catch (e) {
-        log('/connect-whatsapp', 'error', e.message);
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
-
-app.get('/check-whatsapp', async (req, res) => {
-    log('/check-whatsapp', 'start');
-    try {
-        const result = await withRetry(async () => {
-            const page = await getPage('whatsapp', USER_DATA_WA);
-            try {
-                await page.goto('https://web.whatsapp.com/', { waitUntil: 'domcontentloaded' });
-
-                // Fast-fail: Check for Login QR Code OR Main Chat Pane
-                // If we see canvas (QR), we are signed out.
-                // If we see #pane-side, we are signed in.
-                // We use Promise.race to return as soon as one appears.
-
-                try {
-                    const loginOrChat = await Promise.race([
-                        page.waitForSelector('#pane-side', { timeout: 30000 }).then(() => 'logged_in'),
-                        page.waitForSelector('canvas', { timeout: 5000 }).then(() => 'logged_out')
-                    ]);
-
-                    if (loginOrChat === 'logged_out') {
-                        log('/check-whatsapp', 'info', 'Detected QR Code - Not Logged In');
-                        return { new_messages: [], status: 'offline' }; // Status offline
-                    }
-                } catch (err) {
-                    // If both timeout (e.g. slow load), we assume offline or error
-                    log('/check-whatsapp', 'warn', 'Timeout waiting for load');
-                    return { new_messages: [] };
-                }
-
-                const unreadBadges = await page.locator('span[aria-label*="unread message"], span[aria-label*="unread problem"]').all();
-                if (unreadBadges.length === 0) return { new_messages: [] };
-
-                const messages = [];
-                // Try to extract sender names from chat rows
-                const chatRows = await page.locator('[data-testid="cell-frame-container"]').all();
-                for (const row of chatRows.slice(0, 10)) {
-                    const hasBadge = await row.locator('span[aria-label*="unread"]').count() > 0;
-                    if (!hasBadge) continue;
-                    const title = await row.locator('[data-testid="cell-frame-title"]').textContent({ timeout: 1000 }).catch(() => 'Unknown');
-                    const preview = await row.locator('[data-testid="last-msg"]').textContent({ timeout: 1000 }).catch(() => '');
-                    const badge = await row.locator('span[aria-label*="unread"]').textContent({ timeout: 1000 }).catch(() => '1');
-                    messages.push({ sender: title.trim(), preview: preview.trim(), count: parseInt(badge) || 1 });
-                }
-                return { new_messages: messages.length ? messages : [{ sender: 'Unknown', count: unreadBadges.length, preview: '' }] };
-            } finally {
-                // Monitor checks SHOULD close the page to save resources, 
-                // BUT if we want to keep the session alive for the user who just logged in?
-                // Actually, if we close the page, the Context stays if we are using launchPersistentContext?
-                // Yes, getSession returns a context. page.close() closes the tab. 
-                // Context stays. 
-                // BUT if the user is actively using it, we probably shouldn't close it?
-                // No, /check-whatsapp is for background monitoring. It should close the tab.
-                await page.close();
-            }
-        });
-        log('/check-whatsapp', 'ok', `found=${result.new_messages ? result.new_messages.length : 0}`);
-        res.json(result);
-    } catch (e) {
-        log('/check-whatsapp', 'error', e.message);
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
-
-// ─── 8. Check Facebook (Monitoring) ──────────────────────────────────────────
-app.get('/connect-facebook', async (req, res) => {
-    // Launch Facebook but DO NOT CLOSE.
-    log('/connect-facebook', 'start');
-    try {
-        const page = await getPage('facebook', USER_DATA_FB);
-        await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded' });
-        // Return immediately
-        res.json({ success: true, message: 'Facebook launched for interaction' });
-    } catch (e) {
-        log('/connect-facebook', 'error', e.message);
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
-
-app.get('/check-facebook', async (req, res) => {
-    log('/check-facebook', 'start');
-    try {
-        const output = { friend_requests: [], messages: [], events: [], status: 'online' };
-        const page = await getPage('facebook', USER_DATA_FB);
-
-        // ── Friend Requests ──────────────────────────────────────────────────
-        try {
-            await page.goto('https://www.facebook.com/friends/requests', { waitUntil: 'networkidle', timeout: 20000 });
-
-            // Fast-Fail: Check for Login Form
-            if (await page.locator('input[name="email"], input[name="pass"]').count() > 0) {
-                log('/check-facebook', 'info', 'Detected Login Form - Not Logged In');
-                await page.close();
-                return res.json({ ...output, status: 'offline' });
-            }
-
-            await page.waitForTimeout(2000);
-            const cards = await page.locator('div[data-pagelet="FriendingCometFriendRequestsRoot"] div[role="article"]').all();
-            for (const card of cards.slice(0, 5)) {
-                const name = await card.locator('a span').first().textContent({ timeout: 2000 }).catch(() => '');
-                const mutual = await card.locator('span:has-text("mutual")').textContent({ timeout: 1000 }).catch(() => '0');
-                const mutuals = parseInt((mutual.match(/(\d+)/) || ['0', '0'])[1]);
-                if (name) output.friend_requests.push({ type: 'friend_request', name: name.trim(), mutual_friends: mutuals, description: `Friend request from ${name.trim()} (${mutuals} mutual)` });
-            }
-        } catch (e) { log('/check-facebook:friends', 'error', e.message); }
-
-        // ── Messages ─────────────────────────────────────────────────────────
-        try {
-            await page.goto('https://www.facebook.com/messages/', { waitUntil: 'networkidle', timeout: 20000 });
-            await page.waitForTimeout(2000);
-            const unread = await page.locator('div[role="row"] span[style*="font-weight: bold"]').all();
-            for (const t of unread.slice(0, 5)) {
-                const sender = await t.textContent({ timeout: 1000 }).catch(() => 'Unknown');
-                const preview = await t.locator('..').locator('span').nth(1).textContent({ timeout: 1000 }).catch(() => '');
-                output.messages.push({ type: 'message', sender: sender.trim(), preview: preview.trim(), count: 1, description: `Unread message from ${sender.trim()}` });
-            }
-        } catch (e) { log('/check-facebook:messages', 'error', e.message); }
-
-        // ── Notifications ─────────────────────────────────────────────────────
-        try {
-            await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 15000 });
-            const notifSel = 'div[aria-label*="Notifications"][aria-label*="unread"]';
-            if (await page.locator(notifSel).count() > 0) {
-                let text = 'You have unread Facebook notifications.';
-                try {
-                    await page.locator(notifSel).click();
-                    await page.waitForTimeout(1500);
-                    const first = await page.locator('div[role="menu"] div[role="menuitem"]').first().textContent({ timeout: 2000 }).catch(() => '');
-                    if (first) text = first.trim().slice(0, 120);
-                    await page.keyboard.press('Escape');
-                } catch (_) { }
-                output.events.push({ type: 'notification', description: text, action: 'Review notifications on Facebook' });
-            }
-        } catch (e) { log('/check-facebook:notifications', 'error', e.message); }
-
-        await page.close();
-        log('/check-facebook', 'ok', `fr=${output.friend_requests.length} msg=${output.messages.length} ev=${output.events.length}`);
-        res.json(output);
-    } catch (e) {
-        log('/check-facebook', 'error', e.message);
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
-
-// ─── Graceful Shutdown ────────────────────────────────────────────────────────
-async function shutdown() {
-    log('server', 'start', 'Shutting down — closing Playwright sessions');
-    for (const [key, ctx] of Object.entries(sessionCache)) {
-        try { await ctx.close(); log(`session:${key}`, 'ok', 'Closed'); }
-        catch (_) { }
-    }
+// Graceful Exit
+process.on('SIGINT', async () => {
+    log('shutdown', 'info', 'Closing contexts...');
+    if (SERVICES.whatsapp.context) await SERVICES.whatsapp.context.close();
+    if (SERVICES.facebook.context) await SERVICES.facebook.context.close();
     process.exit(0);
-}
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
-
-// ─── Start ────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-    log('server', 'ok', `Listening on port ${PORT} | Endpoints: email, whatsapp, facebook (+reject, +messenger), monitoring`);
 });

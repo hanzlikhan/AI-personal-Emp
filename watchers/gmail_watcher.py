@@ -346,18 +346,13 @@ def send_email(service, to: str, subject: str, body: str):
 # ─── History & Status Helpers ─────────────────────────────────────────────────
 
 HISTORY_FILE = BASE_DIR / "gmail_history.json"
-STATUS_FILE  = BASE_DIR / "status.json"
+HISTORY_FILE = BASE_DIR / "gmail_history.json"
+STATUS_FILE  = BASE_DIR / "status_gmail.json"
 
 def update_heartbeat():
-    """Update status.json with current timestamp."""
+    """Update status_gmail.json with current timestamp."""
     try:
-        data = {}
-        if STATUS_FILE.exists():
-            try:
-                data = json.loads(STATUS_FILE.read_text())
-            except: pass
-        
-        data["gmail"] = {
+        data = {
             "status": "online",
             "last_active": datetime.now().isoformat(),
             "pid": os.getpid()
