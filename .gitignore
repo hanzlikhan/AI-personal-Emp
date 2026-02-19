@@ -1,9 +1,13 @@
 # Credentials and Secrets
-watchers/credentials.json
-watchers/token.pickle
-.env
+**/credentials.json
+**/token.pickle
+**/token.json
+**/secrets.json
+**/*.env
 *.pem
 *.key
+id_rsa
+id_rsa.pub
 
 # Python
 __pycache__/
@@ -13,6 +17,11 @@ venv/
 .venv/
 env/
 .env/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
 
 # IDEs
 .vscode/
@@ -25,5 +34,7 @@ Thumbs.db
 # User Data and Sessions
 watchers/linkedin_user_data/
 watchers/whatsapp_user_data/
-watchers/token.json
+watchers/facebook_user_data/
+watchers/gmail_history.json
+watchers/status.json
 *.log

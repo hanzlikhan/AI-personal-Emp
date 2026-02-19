@@ -1,12 +1,113 @@
 {
     "mcpServers": {
-        "email": {
+        "silver-tier": {
             "command": "node",
             "args": [
-                "watchers/email_mcp.js"
+                "watchers/mcp_server.js"
             ],
             "enabled": true,
-            "description": "HTTP Server running on port 3000. Provides /send-email, /send-whatsapp, /post-linkedin."
+            "version": "3.0",
+            "description": "Silver Tier Unified MCP Server — Port 3000. Endpoints: /send-email, /send-whatsapp, /post-facebook, /accept-friend-facebook, /reject-friend-facebook, /send-facebook-message, /check-whatsapp, /check-facebook, /post-linkedin, /health",
+            "rateLimits": {
+                "send-email": "5 per 60s",
+                "browser-endpoints": "10 per 30s"
+            },
+            "sessionCaching": {
+                "whatsapp": "Playwright session — reused across calls",
+                "facebook": "Playwright session — reused across calls"
+            },
+            "retry": {
+                "attempts": 3,
+                "backoff": "2s → 4s → 8s (exponential)"
+            }
         }
+    },
+    "agentSkills": {
+        "directory": "Vault/Agent_Skills",
+        "version": "3.0",
+        "priority": [
+            "SKILL_watchers.md",
+            "SKILL_reasoning_loop.md",
+            "SKILL_mcp_actions.md",
+            "SKILL_hitl_approval.md",
+            "SKILL_scheduling.md",
+            "SKILL_chat_interface.md"
+        ],
+        "fallback": "Skills/",
+        "description": "Agent reads skills in priority order (1–6). Falls back to Skills/ for legacy reference docs if topic not found in Vault/Agent_Skills.",
+        "loadStrategy": "sequential",
+        "cacheSkills": true,
+        "notes": [
+            "All Vault skills are v3 — preferred over Skills/ legacy files",
+            "SKILL_chat_interface.md handles manual instructions from chat.py",
+            "CoT model waterfall: Gemini → Groq → Claude → Mock"
+        ]
+    },
+    "performance": {
+        "log_dir": "Logs/",
+        "perf_logs": {
+            "scheduler": "Logs/scheduler_perf.log",
+            "reasoning_loop": "Logs/loop_perf.jsonl",
+            "approval": "Logs/approval_log.jsonl",
+            "watchers": "Logs/watcher_perf.jsonl",
+            "mcp_errors": "Logs/mcp_errors.log",
+            "watcher_errors": "Logs/watcher_errors.log",
+            "watchdog": "Logs/watchdog.log",
+            "chat": "Logs/chat_history.jsonl"
+        }
+    },
+    "directories": {
+        "inbox": "Inbox/",
+        "needs_action": "Needs_Action/",
+        "plans": "Plans/",
+        "pending_approval": "Pending_Approval/",
+        "approved": "Approved/",
+        "done": "Done/",
+        "rejected": "Rejected/",
+        "logs": "Logs/",
+        "vault": "Vault/",
+        "agent_skills": "Vault/Agent_Skills/"
+    },
+    "services": {
+        "gmail": {
+            "watcher": "watchers/gmail_watcher.py",
+            "authFile": "credentials.json",
+            "tokenFile": "token.json",
+            "pollInterval_s": 30
+        },
+        "whatsapp": {
+            "watcher": "watchers/whatsapp_watcher.py",
+            "mcpEndpoints": [
+                "/check-whatsapp",
+                "/send-whatsapp"
+            ],
+            "pollInterval_s": 30
+        },
+        "facebook": {
+            "watcher": "watchers/facebook_watcher.py",
+            "mcpEndpoints": [
+                "/check-facebook",
+                "/post-facebook",
+                "/accept-friend-facebook",
+                "/reject-friend-facebook",
+                "/send-facebook-message"
+            ],
+            "pollInterval_s": 30
+        }
+    },
+    "endToEndTest": {
+        "services": [
+            "gmail",
+            "whatsapp",
+            "facebook"
+        ],
+        "testScript": "tests/test_e2e.py",
+        "steps": [
+            "1. Ensure MCP server running: GET localhost:3000/health",
+            "2. Gmail: inject test email task → run reasoning_loop → approve → verify /send-email called",
+            "3. WhatsApp: inject WA task → run reasoning_loop → approve → verify /send-whatsapp called",
+            "4. Facebook: inject friend_request task → run reasoning_loop → approve → verify /accept-friend-facebook called",
+            "5. Check Logs/approval_log.jsonl for all 3 entries with ok=true"
+        ]
     }
 }
