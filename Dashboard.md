@@ -1,52 +1,424 @@
-# AI Employee Dashboard
+
 
 ## Recent Activity
-_Last updated: 2026-02-14 00:14:26_
-
-- [x] TEST_FILE.txt processed by @Basic_File_Handler skill
-- [x] Plan created in /Plans/ folder
-- [x] File moved to /Done folder
-
-## Pending Tasks
-_Currently processing: 0 items_
-
-- [x] All pending tasks completed
-
-## Watchers Status
-_Monitoring external sources_
-- Gmail Watcher: ACTIVE
-- LinkedIn Watcher: <!-- LINKEDIN_WATCHER_STATUS -->
-- Calendar Watcher: <!-- CALENDAR_WATCHER_STATUS -->
-
-## MCP Status
-_Management Control Panel_
-- Active Connections: <!-- MCP_CONNECTIONS -->
-- System Health: <!-- MCP_HEALTH -->
-- Security Level: <!-- SECURITY_LEVEL -->
-
-## Pending Approvals
-_Items awaiting human review_
-- Items in /Pending_Approval/: <!-- PENDING_APPROVAL_COUNT -->
-- Items in /Approved/: <!-- APPROVED_COUNT -->
-- Items in /Rejected/: <!-- REJECTED_COUNT -->
-
-## Bank Balance Summary
-_Current balance: <!-- BALANCE_PLACEHOLDER -->_
-- Last payment processed: <!-- LAST_PAYMENT -->
-- Expected next payment: <!-- NEXT_PAYMENT -->
-
-## Quick Status
-- System Status: <!-- SYSTEM_STATUS -->
-- Active Processes: <!-- ACTIVE_PROCESSES -->
-- Last Action Taken: <!-- LAST_ACTION -->
-
-## Active Agent Skills
-_Silver Tier Skills Active_
-- @Basic_File_Handler: Basic file processing and summarization
-- @Task_Analyzer: Task analysis and approval routing
-- @Gmail_Watcher_Processor: Process incoming emails and route for action
-- @LinkedIn_Poster: Generate and post business content to LinkedIn
-- @Approval_Handler: Human-in-the-loop approval workflow
-
----
-*Auto-generated dashboard. Last refresh: <!-- TIMESTAMP -->*
+- [2026-02-19 16:21] Processed email task `20260219_162049_gmail_Hanzla__finish_setting_up_your.md`. Plan: `20260219_162112_20260219_162049_gmail_Hanzla__finish_setting_up_your_plan.md`. Confidence: medium.
+- [2026-02-19 16:21] Processed email task `20260219_162044_gmail_Welcome_to_Binance__let_s_get_.md`. Plan: `20260219_162106_20260219_162044_gmail_Welcome_to_Binance__let_s_get__plan.md`. Confidence: medium.
+- [2026-02-19 16:21] Processed email task `20260219_162045_gmail_Congratulations__you_ve_got_a_.md`. Plan: `20260219_162106_20260219_162045_gmail_Congratulations__you_ve_got_a__plan.md`. Confidence: medium.
+- [2026-02-19 16:21] Processed email task `20260219_162046_gmail___Hanzla__finish_setting_up_yo.md`. Plan: `20260219_162105_20260219_162046_gmail___Hanzla__finish_setting_up_yo_plan.md`. Confidence: medium.
+- [2026-02-19 16:21] Processed email task `20260219_162043_gmail_New_to_Binance__Start_here____.md`. Plan: `20260219_162104_20260219_162043_gmail_New_to_Binance__Start_here_____plan.md`. Confidence: medium.
+- [2026-02-19 16:21] Processed email task `20260219_162042_gmail_Verify_your_identity_to_start_.md`. Plan: `20260219_162104_20260219_162042_gmail_Verify_your_identity_to_start__plan.md`. Confidence: medium.
+- [2026-02-19 16:21] Processed email task `20260219_162040_gmail_You_Don_t_Have_to_be_a_Pro_to_.md`. Plan: `20260219_162102_20260219_162040_gmail_You_Don_t_Have_to_be_a_Pro_to__plan.md`. Confidence: medium.
+- [2026-02-19 16:21] Processed email task `20260219_162037_gmail__Binance__Verification_Success.md`. Plan: `20260219_162102_20260219_162037_gmail__Binance__Verification_Success_plan.md`. Confidence: medium.
+- [2026-02-19 16:21] Processed email task `20260219_162039_gmail_Next_step___add_funds_to_your_.md`. Plan: `20260219_162101_20260219_162039_gmail_Next_step___add_funds_to_your__plan.md`. Confidence: medium.
+- [2026-02-19 16:20] Processed email task `20260219_162004_gmail__Binance__Open_your_NFT_myster.md`. Plan: `20260219_162020_20260219_162004_gmail__Binance__Open_your_NFT_myster_plan.md`. Confidence: medium.
+- [2026-02-19 16:20] Processed email task `20260219_162003_gmail_Forgot_something_.md`. Plan: `20260219_162017_20260219_162003_gmail_Forgot_something__plan.md`. Confidence: medium.
+- [2026-02-19 16:20] Processed email task `20260219_162002_gmail_Trading_Fee_Rebate_voucher_exp.md`. Plan: `20260219_162013_20260219_162002_gmail_Trading_Fee_Rebate_voucher_exp_plan.md`. Confidence: medium.
+- [2026-02-19 16:20] Processed email task `20260219_162001_gmail_Read_Why_Our_Users_Trust_Binan.md`. Plan: `20260219_162012_20260219_162001_gmail_Read_Why_Our_Users_Trust_Binan_plan.md`. Confidence: medium.
+- [2026-02-19 16:20] Processed email task `20260219_162001_gmail_Psst__Something_BIG_is_on_the_.md`. Plan: `20260219_162011_20260219_162001_gmail_Psst__Something_BIG_is_on_the__plan.md`. Confidence: medium.
+- [2026-02-19 16:20] Processed email task `20260219_161959_gmail___Countdown_Alert_-_Have_Your_.md`. Plan: `20260219_162010_20260219_161959_gmail___Countdown_Alert_-_Have_Your__plan.md`. Confidence: medium.
+- [2026-02-19 16:20] Processed email task `20260219_162000_gmail___Don_t_miss_out_on_the_MEME_c.md`. Plan: `20260219_162010_20260219_162000_gmail___Don_t_miss_out_on_the_MEME_c_plan.md`. Confidence: medium.
+- [2026-02-19 16:20] Processed email task `20260219_161957_gmail___Tomorrow_s_the_day___You_ll_.md`. Plan: `20260219_162010_20260219_161957_gmail___Tomorrow_s_the_day___You_ll__plan.md`. Confidence: medium.
+- [2026-02-19 16:20] Processed email task `20260219_161958_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_162009_20260219_161958_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:19] Processed email task `20260219_161925_gmail___Web_Awesome_Kickstarter_is_L.md`. Plan: `20260219_161945_20260219_161925_gmail___Web_Awesome_Kickstarter_is_L_plan.md`. Confidence: medium.
+- [2026-02-19 16:19] Processed email task `20260219_161923_gmail___You_funded_Web_Awesome_500__.md`. Plan: `20260219_161937_20260219_161923_gmail___You_funded_Web_Awesome_500___plan.md`. Confidence: medium.
+- [2026-02-19 16:19] Processed email task `20260219_161921_gmail_Font_Awesome_Playing_Cards____.md`. Plan: `20260219_161936_20260219_161921_gmail_Font_Awesome_Playing_Cards_____plan.md`. Confidence: medium.
+- [2026-02-19 16:19] Processed email task `20260219_161922_gmail___Thank_You__We_ve_hit_a__200K.md`. Plan: `20260219_161936_20260219_161922_gmail___Thank_You__We_ve_hit_a__200K_plan.md`. Confidence: medium.
+- [2026-02-19 16:19] Processed email task `20260219_161920_gmail_No_foolin___Font_Awesome_Pro_f.md`. Plan: `20260219_161935_20260219_161920_gmail_No_foolin___Font_Awesome_Pro_f_plan.md`. Confidence: medium.
+- [2026-02-19 16:19] Processed email task `20260219_161917_gmail_50__Off_Font_Awesome_Pro__Fore.md`. Plan: `20260219_161934_20260219_161917_gmail_50__Off_Font_Awesome_Pro__Fore_plan.md`. Confidence: medium.
+- [2026-02-19 16:19] Processed email task `20260219_161917_gmail_Only_2_Weeks_Left___.md`. Plan: `20260219_161931_20260219_161917_gmail_Only_2_Weeks_Left____plan.md`. Confidence: medium.
+- [2026-02-19 16:19] Processed email task `20260219_161915_gmail_Introducing_the_FACU____54__of.md`. Plan: `20260219_161931_20260219_161915_gmail_Introducing_the_FACU____54__of_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161843_gmail_Your_Google_Play_purchase_veri.md`. Plan: `20260219_161852_20260219_161843_gmail_Your_Google_Play_purchase_veri_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161842_gmail___Only_7_Days_Left___Get_Web_A.md`. Plan: `20260219_161851_20260219_161842_gmail___Only_7_Days_Left___Get_Web_A_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161842_gmail_Web_Awesome_on_the_Syntax_Podc.md`. Plan: `20260219_161849_20260219_161842_gmail_Web_Awesome_on_the_Syntax_Podc_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161840_gmail___Only_two_more_days_to_get_54.md`. Plan: `20260219_161849_20260219_161840_gmail___Only_two_more_days_to_get_54_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161841_gmail_Only_3_days_left__Help_fund_op.md`. Plan: `20260219_161848_20260219_161841_gmail_Only_3_days_left__Help_fund_op_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161839_gmail___Just_24_hours_left_in_the_WA.md`. Plan: `20260219_161847_20260219_161839_gmail___Just_24_hours_left_in_the_WA_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161839_gmail___18_hours_left_to_reach_the_D.md`. Plan: `20260219_161846_20260219_161839_gmail___18_hours_left_to_reach_the_D_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161838_gmail___Just_12_hours_left___50__off.md`. Plan: `20260219_161845_20260219_161838_gmail___Just_12_hours_left___50__off_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161836_gmail__Web_Awesome_Pro_deals_gone_in.md`. Plan: `20260219_161844_20260219_161836_gmail__Web_Awesome_Pro_deals_gone_in_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161837_gmail___Don_t_miss_out_on_Web_Awesom.md`. Plan: `20260219_161844_20260219_161837_gmail___Don_t_miss_out_on_Web_Awesom_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161805_gmail____Web_Awesome_Pro_Final_Hour_.md`. Plan: `20260219_161816_20260219_161805_gmail____Web_Awesome_Pro_Final_Hour__plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161804_gmail_Learn_more_about_our_updated_T.md`. Plan: `20260219_161816_20260219_161804_gmail_Learn_more_about_our_updated_T_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed unknown task `20260219_161804_gmail_New_reply_to_a_comment_on__Ful.md`. Plan: `20260219_161815_20260219_161804_gmail_New_reply_to_a_comment_on__Ful_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161803_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161813_20260219_161803_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161802_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161812_20260219_161802_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161801_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161810_20260219_161801_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161800_gmail_Update_your_password_regularly.md`. Plan: `20260219_161809_20260219_161800_gmail_Update_your_password_regularly_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161800_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161808_20260219_161800_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161759_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_161807_20260219_161759_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:18] Processed email task `20260219_161758_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161805_20260219_161758_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161727_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_161734_20260219_161727_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161726_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161733_20260219_161726_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161725_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_161732_20260219_161725_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161724_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161731_20260219_161724_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161724_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_161731_20260219_161724_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161723_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161730_20260219_161723_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161722_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_161729_20260219_161722_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161721_gmail_Introducing_Font_Awesome_Sharp.md`. Plan: `20260219_161728_20260219_161721_gmail_Introducing_Font_Awesome_Sharp_plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161721_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161727_20260219_161721_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:17] Processed email task `20260219_161720_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_161727_20260219_161720_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161649_gmail_Just_Right___Font_Awesome_Pro_.md`. Plan: `20260219_161656_20260219_161649_gmail_Just_Right___Font_Awesome_Pro__plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161648_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161655_20260219_161648_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161646_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_161654_20260219_161646_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161647_gmail_New_Options_to_Manage_Personal.md`. Plan: `20260219_161654_20260219_161647_gmail_New_Options_to_Manage_Personal_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161646_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161653_20260219_161646_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161645_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_161652_20260219_161645_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161644_gmail__Start_trading_with_just_5_USD.md`. Plan: `20260219_161651_20260219_161644_gmail__Start_trading_with_just_5_USD_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161643_gmail___Last_Chance__Track_Weekly_s_.md`. Plan: `20260219_161651_20260219_161643_gmail___Last_Chance__Track_Weekly_s__plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161642_gmail_hanzla__welcome_to_the_Google_.md`. Plan: `20260219_161650_20260219_161642_gmail_hanzla__welcome_to_the_Google__plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161642_gmail_Risky_countries_have_been_enab.md`. Plan: `20260219_161649_20260219_161642_gmail_Risky_countries_have_been_enab_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161611_gmail_Thanks_for_your_recent_review.md`. Plan: `20260219_161618_20260219_161611_gmail_Thanks_for_your_recent_review_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161610_gmail_Boost_Your_Crypto_with_11_5__A.md`. Plan: `20260219_161617_20260219_161610_gmail_Boost_Your_Crypto_with_11_5__A_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161609_gmail_Boost_Your_Crypto_with_11_5__A.md`. Plan: `20260219_161616_20260219_161609_gmail_Boost_Your_Crypto_with_11_5__A_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161608_gmail_Too_Good_to_Miss__Up_to_11_5__.md`. Plan: `20260219_161615_20260219_161608_gmail_Too_Good_to_Miss__Up_to_11_5___plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161607_gmail_Too_Good_to_Miss__Up_to_11_5__.md`. Plan: `20260219_161614_20260219_161607_gmail_Too_Good_to_Miss__Up_to_11_5___plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161606_gmail_We_re_Turning_It_Up_to_Elevent.md`. Plan: `20260219_161613_20260219_161606_gmail_We_re_Turning_It_Up_to_Elevent_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161606_gmail_Take_on_the_Bitcoin_Showdown__.md`. Plan: `20260219_161613_20260219_161606_gmail_Take_on_the_Bitcoin_Showdown___plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161605_gmail_Your_files_are_safe_with_OneDr.md`. Plan: `20260219_161612_20260219_161605_gmail_Your_files_are_safe_with_OneDr_plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161604_gmail_Take_on_the_Bitcoin_Showdown__.md`. Plan: `20260219_161612_20260219_161604_gmail_Take_on_the_Bitcoin_Showdown___plan.md`. Confidence: medium.
+- [2026-02-19 16:16] Processed email task `20260219_161603_gmail_Win_a_Share_of_1_BTC___Bitcoin.md`. Plan: `20260219_161610_20260219_161603_gmail_Win_a_Share_of_1_BTC___Bitcoin_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161532_gmail_Win_a_Share_of_1_BTC___Bitcoin.md`. Plan: `20260219_161541_20260219_161532_gmail_Win_a_Share_of_1_BTC___Bitcoin_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161531_gmail_Take_on_the_Bitcoin_Showdown__.md`. Plan: `20260219_161541_20260219_161531_gmail_Take_on_the_Bitcoin_Showdown___plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161531_gmail_Take_on_the_Bitcoin_Showdown__.md`. Plan: `20260219_161539_20260219_161531_gmail_Take_on_the_Bitcoin_Showdown___plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161530_gmail_Take_on_the_Bitcoin_Showdown__.md`. Plan: `20260219_161539_20260219_161530_gmail_Take_on_the_Bitcoin_Showdown___plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161529_gmail_Take_on_the_Bitcoin_Showdown__.md`. Plan: `20260219_161538_20260219_161529_gmail_Take_on_the_Bitcoin_Showdown___plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161528_gmail_Only_a_few_days_left_to_win_Bi.md`. Plan: `20260219_161537_20260219_161528_gmail_Only_a_few_days_left_to_win_Bi_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161527_gmail_Only_a_few_days_left_to_win_Bi.md`. Plan: `20260219_161537_20260219_161527_gmail_Only_a_few_days_left_to_win_Bi_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161526_gmail_Exclusive__Earn_a_15__APR_with.md`. Plan: `20260219_161536_20260219_161526_gmail_Exclusive__Earn_a_15__APR_with_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161526_gmail_Exclusive__Earn_a_15__APR_with.md`. Plan: `20260219_161535_20260219_161526_gmail_Exclusive__Earn_a_15__APR_with_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161525_gmail_Boost_Your_USDT_with_a_15__APR.md`. Plan: `20260219_161534_20260219_161525_gmail_Boost_Your_USDT_with_a_15__APR_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161452_gmail_Too_Good_to_Miss__15__APR_with.md`. Plan: `20260219_161502_20260219_161452_gmail_Too_Good_to_Miss__15__APR_with_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161453_gmail_Boost_Your_USDT_with_a_15__APR.md`. Plan: `20260219_161501_20260219_161453_gmail_Boost_Your_USDT_with_a_15__APR_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161451_gmail_Too_Good_to_Miss__15__APR_with.md`. Plan: `20260219_161501_20260219_161451_gmail_Too_Good_to_Miss__15__APR_with_plan.md`. Confidence: medium.
+- [2026-02-19 16:15] Processed email task `20260219_161449_gmail_Smarter_Trading_Starts_Here__S.md`. Plan: `20260219_161500_20260219_161449_gmail_Smarter_Trading_Starts_Here__S_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161451_gmail___Ends_This_Week___15__APR_wit.md`. Plan: `20260219_161459_20260219_161451_gmail___Ends_This_Week___15__APR_wit_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161450_gmail___Ends_This_Week___15__APR_wit.md`. Plan: `20260219_161459_20260219_161450_gmail___Ends_This_Week___15__APR_wit_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161448_gmail___Ends_This_Week___15__APR_wit.md`. Plan: `20260219_161457_20260219_161448_gmail___Ends_This_Week___15__APR_wit_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161447_gmail_Open_Your_Red_Packet___.md`. Plan: `20260219_161457_20260219_161447_gmail_Open_Your_Red_Packet____plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161446_gmail___Win_1_BNB__worth__600__with_.md`. Plan: `20260219_161456_20260219_161446_gmail___Win_1_BNB__worth__600__with__plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161414_gmail_Share_some_quick_feedback_.md`. Plan: `20260219_161431_20260219_161414_gmail_Share_some_quick_feedback__plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161413_gmail_Second_Chance_to_Leave_Feedbac.md`. Plan: `20260219_161429_20260219_161413_gmail_Second_Chance_to_Leave_Feedbac_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161412_gmail_Verify_your_email.md`. Plan: `20260219_161425_20260219_161412_gmail_Verify_your_email_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161411_gmail_You_logged_into_ELSA_Speak_wit.md`. Plan: `20260219_161424_20260219_161411_gmail_You_logged_into_ELSA_Speak_wit_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161410_gmail_Your_next_job_is_waiting_for_y.md`. Plan: `20260219_161421_20260219_161410_gmail_Your_next_job_is_waiting_for_y_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161410_gmail_Improve_your_chances_of_securi.md`. Plan: `20260219_161420_20260219_161410_gmail_Improve_your_chances_of_securi_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161409_gmail_Facebook_s_Video_Storage_Polic.md`. Plan: `20260219_161418_20260219_161409_gmail_Facebook_s_Video_Storage_Polic_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161408_gmail_Let_s_work_together_to_help_yo.md`. Plan: `20260219_161418_20260219_161408_gmail_Let_s_work_together_to_help_yo_plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed facebook_post task `20260219_161407_gmail____ابراہیم_مرزا__commented_on_.md`. Plan: `20260219_161417_20260219_161407_gmail____ابراہیم_مرزا__commented_on__plan.md`. Confidence: medium.
+- [2026-02-19 16:14] Processed email task `20260219_161406_gmail_You_have_21_notifications_abou.md`. Plan: `20260219_161417_20260219_161406_gmail_You_have_21_notifications_abou_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161335_gmail_Someone_added_you_as_their_rec.md`. Plan: `20260219_161345_20260219_161335_gmail_Someone_added_you_as_their_rec_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161334_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_161344_20260219_161334_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161333_gmail_Is_it_time_to_change_jobs_.md`. Plan: `20260219_161343_20260219_161333_gmail_Is_it_time_to_change_jobs__plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161331_gmail_Muhammad___make_sure_your_next.md`. Plan: `20260219_161342_20260219_161331_gmail_Muhammad___make_sure_your_next_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161332_gmail_Verify_Discord_Login_from_New_.md`. Plan: `20260219_161342_20260219_161332_gmail_Verify_Discord_Login_from_New__plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161331_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_161340_20260219_161331_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161329_gmail_Supercharge_your_job_search_.md`. Plan: `20260219_161338_20260219_161329_gmail_Supercharge_your_job_search__plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161330_gmail_You_have_35_notifications_abou.md`. Plan: `20260219_161338_20260219_161330_gmail_You_have_35_notifications_abou_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161328_gmail__ICode_Guru___Facebook_s_Video.md`. Plan: `20260219_161335_20260219_161328_gmail__ICode_Guru___Facebook_s_Video_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161328_gmail_Turn_a_job_rejection_into_an_o.md`. Plan: `20260219_161335_20260219_161328_gmail_Turn_a_job_rejection_into_an_o_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161256_gmail_You_have_83_notifications_abou.md`. Plan: `20260219_161305_20260219_161256_gmail_You_have_83_notifications_abou_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161255_gmail_Security_alert.md`. Plan: `20260219_161303_20260219_161255_gmail_Security_alert_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161256_gmail_You_have_a_new_friend_suggesti.md`. Plan: `20260219_161303_20260219_161256_gmail_You_have_a_new_friend_suggesti_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161254_gmail_Want_to_hear_how_others_found_.md`. Plan: `20260219_161302_20260219_161254_gmail_Want_to_hear_how_others_found__plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161254_gmail_Security_alert.md`. Plan: `20260219_161301_20260219_161254_gmail_Security_alert_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161253_gmail_hanzla__Welcome_to_Google_AI_S.md`. Plan: `20260219_161300_20260219_161253_gmail_hanzla__Welcome_to_Google_AI_S_plan.md`. Confidence: medium.
+- [2026-02-19 16:13] Processed email task `20260219_161252_gmail_You_re_now_using_Gemini_on_web.md`. Plan: `20260219_161300_20260219_161252_gmail_You_re_now_using_Gemini_on_web_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161251_gmail_Your_ChatGPT_code_is_571517.md`. Plan: `20260219_161258_20260219_161251_gmail_Your_ChatGPT_code_is_571517_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed unknown task `20260219_161251_gmail_OpenWeatherMap_Account_confirm.md`. Plan: `20260219_161257_20260219_161251_gmail_OpenWeatherMap_Account_confirm_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161250_gmail_Muhammad_hanzla_has_invited_yo.md`. Plan: `20260219_161257_20260219_161250_gmail_Muhammad_hanzla_has_invited_yo_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161217_gmail_hanzla__experiment_with_prompt.md`. Plan: `20260219_161227_20260219_161217_gmail_hanzla__experiment_with_prompt_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161219_gmail__GitHub__Please_verify_your_de.md`. Plan: `20260219_161226_20260219_161219_gmail__GitHub__Please_verify_your_de_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161218_gmail__GitHub__Please_review_this_si.md`. Plan: `20260219_161225_20260219_161218_gmail__GitHub__Please_review_this_si_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161217_gmail_Action_required__Accept_your_i.md`. Plan: `20260219_161225_20260219_161217_gmail_Action_required__Accept_your_i_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161216_gmail_Muhammad_Talha_Thaheem_sent_yo.md`. Plan: `20260219_161224_20260219_161216_gmail_Muhammad_Talha_Thaheem_sent_yo_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161215_gmail_Facebook_s_Video_Storage_Polic.md`. Plan: `20260219_161223_20260219_161215_gmail_Facebook_s_Video_Storage_Polic_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161214_gmail_hanzla__don_t_miss_out__Unlock.md`. Plan: `20260219_161222_20260219_161214_gmail_hanzla__don_t_miss_out__Unlock_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161212_gmail___You_and_Muhammad_Farhan_have.md`. Plan: `20260219_161221_20260219_161212_gmail___You_and_Muhammad_Farhan_have_plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161214_gmail_Code_in_Place_Week_3_Tasks_.md`. Plan: `20260219_161221_20260219_161214_gmail_Code_in_Place_Week_3_Tasks__plan.md`. Confidence: medium.
+- [2026-02-19 16:12] Processed email task `20260219_161213_gmail_Don_t_miss_out__Accept_your_in.md`. Plan: `20260219_161220_20260219_161213_gmail_Don_t_miss_out__Accept_your_in_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161141_gmail_You_have_a_new_friend_suggesti.md`. Plan: `20260219_161149_20260219_161141_gmail_You_have_a_new_friend_suggesti_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161139_gmail___Muhammad_Farhan_and_Manha_Fa.md`. Plan: `20260219_161148_20260219_161139_gmail___Muhammad_Farhan_and_Manha_Fa_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161140_gmail___Muhammad_Farhan_and_Sikander.md`. Plan: `20260219_161147_20260219_161140_gmail___Muhammad_Farhan_and_Sikander_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161139_gmail_Finish_up_Week_3_of_Code_in_Pl.md`. Plan: `20260219_161146_20260219_161139_gmail_Finish_up_Week_3_of_Code_in_Pl_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161138_gmail_Code_in_Place_Week_4_Tasks_.md`. Plan: `20260219_161145_20260219_161138_gmail_Code_in_Place_Week_4_Tasks__plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161137_gmail__GitHub__A_third-party_OAuth_a.md`. Plan: `20260219_161145_20260219_161137_gmail__GitHub__A_third-party_OAuth_a_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161136_gmail_Welcome_to_Tavily_.md`. Plan: `20260219_161144_20260219_161136_gmail_Welcome_to_Tavily__plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161136_gmail__GitHub__A_third-party_OAuth_a.md`. Plan: `20260219_161143_20260219_161136_gmail__GitHub__A_third-party_OAuth_a_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed unknown task `20260219_161134_gmail__2_7__Test___Tweak_in_LangSmit.md`. Plan: `20260219_161143_20260219_161134_gmail__2_7__Test___Tweak_in_LangSmit_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed unknown task `20260219_161135_gmail__1_7__Welcome_to_LangSmith__Lo.md`. Plan: `20260219_161142_20260219_161135_gmail__1_7__Welcome_to_LangSmith__Lo_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161056_gmail_Facebook_s_Video_Storage_Polic.md`. Plan: `20260219_161123_20260219_161056_gmail_Facebook_s_Video_Storage_Polic_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161103_gmail_Code_in_Place_Section_Reminder.md`. Plan: `20260219_161111_20260219_161103_gmail_Code_in_Place_Section_Reminder_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161102_gmail_hanzla__build_agentic_applicat.md`. Plan: `20260219_161110_20260219_161102_gmail_hanzla__build_agentic_applicat_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed unknown task `20260219_161100_gmail__3_7__Managing_Your_Prompts_in.md`. Plan: `20260219_161109_20260219_161100_gmail__3_7__Managing_Your_Prompts_in_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161101_gmail_Catch_Up_on_Interrupt__Keynote.md`. Plan: `20260219_161109_20260219_161101_gmail_Catch_Up_on_Interrupt__Keynote_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161100_gmail_Finish_up_Week_5_of_Code_in_Pl.md`. Plan: `20260219_161109_20260219_161100_gmail_Finish_up_Week_5_of_Code_in_Pl_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161059_gmail_Security_alert.md`. Plan: `20260219_161108_20260219_161059_gmail_Security_alert_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161058_gmail_Welcome_to_Power_Thesaurus_.md`. Plan: `20260219_161107_20260219_161058_gmail_Welcome_to_Power_Thesaurus__plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed email task `20260219_161058_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_161107_20260219_161058_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed unknown task `20260219_161057_gmail__4_7__Getting_Started_with_Dat.md`. Plan: `20260219_161104_20260219_161057_gmail__4_7__Getting_Started_with_Dat_plan.md`. Confidence: medium.
+- [2026-02-19 16:11] Processed unknown task `20260219_161018_gmail__7_7__Monitor_Your_App_s_Perfo.md`. Plan: `20260219_161102_20260219_161018_gmail__7_7__Monitor_Your_App_s_Perfo_plan.md`. Confidence: medium.
+- [2026-02-19 16:10] Processed email task `20260219_161025_gmail_Code_in_Place_Week_6_Tasks_.md`. Plan: `20260219_161035_20260219_161025_gmail_Code_in_Place_Week_6_Tasks__plan.md`. Confidence: medium.
+- [2026-02-19 16:10] Processed email task `20260219_161024_gmail_Welcome_to_Gemini.md`. Plan: `20260219_161034_20260219_161024_gmail_Welcome_to_Gemini_plan.md`. Confidence: medium.
+- [2026-02-19 16:10] Processed unknown task `20260219_161024_gmail__5_7__Refining_Your_LLM_App_wi.md`. Plan: `20260219_161033_20260219_161024_gmail__5_7__Refining_Your_LLM_App_wi_plan.md`. Confidence: medium.
+- [2026-02-19 16:10] Processed unknown task `20260219_161023_gmail__6_7__Automations_for_Your_Pro.md`. Plan: `20260219_161032_20260219_161023_gmail__6_7__Automations_for_Your_Pro_plan.md`. Confidence: medium.
+- [2026-02-19 16:10] Processed email task `20260219_161022_gmail___May__LangGraph_Platform_GA__.md`. Plan: `20260219_161030_20260219_161022_gmail___May__LangGraph_Platform_GA___plan.md`. Confidence: medium.
+- [2026-02-19 16:10] Processed email task `20260219_161021_gmail__GitHub__A_third-party_OAuth_a.md`. Plan: `20260219_161030_20260219_161021_gmail__GitHub__A_third-party_OAuth_a_plan.md`. Confidence: medium.
+- [2026-02-19 16:10] Processed email task `20260219_161021_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_161030_20260219_161021_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 16:10] Processed email task `20260219_161020_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_161029_20260219_161020_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 16:10] Processed email task `20260219_161019_gmail_Let_s_get_you_set_up_with_Heli.md`. Plan: `20260219_161028_20260219_161019_gmail_Let_s_get_you_set_up_with_Heli_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160947_gmail_Helicone_Tips__1_4___Trace_you.md`. Plan: `20260219_160954_20260219_160947_gmail_Helicone_Tips__1_4___Trace_you_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160947_gmail_Helicone_Tips__2_4___Custom_pr.md`. Plan: `20260219_160954_20260219_160947_gmail_Helicone_Tips__2_4___Custom_pr_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160946_gmail_Helicone_Tips__3_4___Prompt_Ed.md`. Plan: `20260219_160953_20260219_160946_gmail_Helicone_Tips__3_4___Prompt_Ed_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160945_gmail_Helicone_Tips__4_4___A_suite_o.md`. Plan: `20260219_160952_20260219_160945_gmail_Helicone_Tips__4_4___A_suite_o_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160944_gmail__ICode_Guru___Facebook_s_Video.md`. Plan: `20260219_160951_20260219_160944_gmail__ICode_Guru___Facebook_s_Video_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160944_gmail_Your_first_week_in_Helicone__.md`. Plan: `20260219_160951_20260219_160944_gmail_Your_first_week_in_Helicone___plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160943_gmail___Hassan_Mehmood_is_a_new_frie.md`. Plan: `20260219_160950_20260219_160943_gmail___Hassan_Mehmood_is_a_new_frie_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160942_gmail___Furqan_Siwag_is_a_new_friend.md`. Plan: `20260219_160950_20260219_160942_gmail___Furqan_Siwag_is_a_new_friend_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed unknown task `20260219_160941_gmail_Weather_API_Trial_Ended_-_Weat.md`. Plan: `20260219_160948_20260219_160941_gmail_Weather_API_Trial_Ended_-_Weat_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160941_gmail____کاشف_رفیق__is_a_new_friend_.md`. Plan: `20260219_160947_20260219_160941_gmail____کاشف_رفیق__is_a_new_friend__plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160910_gmail___Ali_Hussnain_commented_on_a_.md`. Plan: `20260219_160917_20260219_160910_gmail___Ali_Hussnain_commented_on_a__plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160909_gmail__Product_Update__New_security_.md`. Plan: `20260219_160916_20260219_160909_gmail__Product_Update__New_security__plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160908_gmail_Share_some_quick_feedback_.md`. Plan: `20260219_160915_20260219_160908_gmail_Share_some_quick_feedback__plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160907_gmail_Security_alert.md`. Plan: `20260219_160914_20260219_160907_gmail_Security_alert_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160907_gmail_Hanzla__review_your_Google_Acc.md`. Plan: `20260219_160913_20260219_160907_gmail_Hanzla__review_your_Google_Acc_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160906_gmail_Try_new_Gemini_2_5_model_relea.md`. Plan: `20260219_160913_20260219_160906_gmail_Try_new_Gemini_2_5_model_relea_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160905_gmail_Second_Chance_to_Leave_Feedbac.md`. Plan: `20260219_160912_20260219_160905_gmail_Second_Chance_to_Leave_Feedbac_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160904_gmail_Arc_s_guide__How_to_get_hired_.md`. Plan: `20260219_160911_20260219_160904_gmail_Arc_s_guide__How_to_get_hired__plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160904_gmail__NEW__LangChain_Academy__Build.md`. Plan: `20260219_160911_20260219_160904_gmail__NEW__LangChain_Academy__Build_plan.md`. Confidence: medium.
+- [2026-02-19 16:09] Processed email task `20260219_160903_gmail_We_re_betting_our_entire_compa.md`. Plan: `20260219_160910_20260219_160903_gmail_We_re_betting_our_entire_compa_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed email task `20260219_160832_gmail__June__Agent_evals_in_LangGrap.md`. Plan: `20260219_160839_20260219_160832_gmail__June__Agent_evals_in_LangGrap_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed unknown task `20260219_160830_gmail_hanzla__here_s_how_to_detect_A.md`. Plan: `20260219_160838_20260219_160830_gmail_hanzla__here_s_how_to_detect_A_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed unknown task `20260219_160831_gmail_hanzla__Welcome_to_Originality.md`. Plan: `20260219_160838_20260219_160831_gmail_hanzla__Welcome_to_Originality_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed email task `20260219_160829_gmail_Try_the_new_Pronunciation_Skil.md`. Plan: `20260219_160836_20260219_160829_gmail_Try_the_new_Pronunciation_Skil_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed unknown task `20260219_160829_gmail_hanzla__detect_AI_content_inst.md`. Plan: `20260219_160836_20260219_160829_gmail_hanzla__detect_AI_content_inst_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed unknown task `20260219_160828_gmail_Can_The_New_Grok_4_be_detected.md`. Plan: `20260219_160835_20260219_160828_gmail_Can_The_New_Grok_4_be_detected_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed email task `20260219_160827_gmail_Security_alert.md`. Plan: `20260219_160834_20260219_160827_gmail_Security_alert_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed email task `20260219_160826_gmail___Hanzla__finish_setting_up_yo.md`. Plan: `20260219_160833_20260219_160826_gmail___Hanzla__finish_setting_up_yo_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed unknown task `20260219_160826_gmail_hanzla__is_your_content_really.md`. Plan: `20260219_160833_20260219_160826_gmail_hanzla__is_your_content_really_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed email task `20260219_160825_gmail_Welcome_to_Pinecone.md`. Plan: `20260219_160832_20260219_160825_gmail_Welcome_to_Pinecone_plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed email task `20260219_160754_gmail_The_wait_is_almost_over___.md`. Plan: `20260219_160801_20260219_160754_gmail_The_wait_is_almost_over____plan.md`. Confidence: medium.
+- [2026-02-19 16:08] Processed email task `20260219_160753_gmail__Docker__You___Docker___Ready_.md`. Plan: `20260219_160800_20260219_160753_gmail__Docker__You___Docker___Ready__plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed unknown task `20260219_160752_gmail_hanzla__Ready_to_go_pro__Unloc.md`. Plan: `20260219_160759_20260219_160752_gmail_hanzla__Ready_to_go_pro__Unloc_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160752_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_160759_20260219_160752_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160751_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_160758_20260219_160751_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160750_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_160757_20260219_160750_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160749_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_160756_20260219_160749_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed unknown task `20260219_160749_gmail_hanzla__is_your_content_SEO-re.md`. Plan: `20260219_160756_20260219_160749_gmail_hanzla__is_your_content_SEO-re_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160748_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_160755_20260219_160748_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed unknown task `20260219_160747_gmail_Originality_ai_in_the_News__NY.md`. Plan: `20260219_160754_20260219_160747_gmail_Originality_ai_in_the_News__NY_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed unknown task `20260219_160715_gmail_hanzla__triple-check_your_cont.md`. Plan: `20260219_160722_20260219_160715_gmail_hanzla__triple-check_your_cont_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160715_gmail__New__Gemini_Embedding_model_i.md`. Plan: `20260219_160721_20260219_160715_gmail__New__Gemini_Embedding_model_i_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160714_gmail_New_login_to_your_xAI_account.md`. Plan: `20260219_160721_20260219_160714_gmail_New_login_to_your_xAI_account_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed unknown task `20260219_160712_gmail_hanzla_there_s_a_lot_more_insi.md`. Plan: `20260219_160720_20260219_160712_gmail_hanzla_there_s_a_lot_more_insi_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160713_gmail___Daily_Practice_is_here__Grow.md`. Plan: `20260219_160720_20260219_160713_gmail___Daily_Practice_is_here__Grow_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160712_gmail_Complete_your_DeepL_registrati.md`. Plan: `20260219_160719_20260219_160712_gmail_Complete_your_DeepL_registrati_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160710_gmail__July__LangChain_Academy_Live_.md`. Plan: `20260219_160718_20260219_160710_gmail__July__LangChain_Academy_Live__plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160711_gmail_Get_started_with_DeepL.md`. Plan: `20260219_160718_20260219_160711_gmail_Get_started_with_DeepL_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed email task `20260219_160709_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_160717_20260219_160709_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 16:07] Processed unknown task `20260219_160708_gmail_hanzla___worried_about_false_p.md`. Plan: `20260219_160716_20260219_160708_gmail_hanzla___worried_about_false_p_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160637_gmail_AI_by_Hand____Workshop_Scholar.md`. Plan: `20260219_160645_20260219_160637_gmail_AI_by_Hand____Workshop_Scholar_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160636_gmail_Learn_what_DeepL_can_do_for_yo.md`. Plan: `20260219_160643_20260219_160636_gmail_Learn_what_DeepL_can_do_for_yo_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160635_gmail_You_logged_into_Write___Improv.md`. Plan: `20260219_160643_20260219_160635_gmail_You_logged_into_Write___Improv_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160635_gmail_Join_Us_Live__Why_RAG_Remains_.md`. Plan: `20260219_160642_20260219_160635_gmail_Join_Us_Live__Why_RAG_Remains__plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160634_gmail_Veo_3_with_native_audio_is_now.md`. Plan: `20260219_160641_20260219_160634_gmail_Veo_3_with_native_audio_is_now_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160633_gmail_Translate_more_characters_with.md`. Plan: `20260219_160641_20260219_160633_gmail_Translate_more_characters_with_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160632_gmail_Hanzla__you_re_now_a_member_of.md`. Plan: `20260219_160639_20260219_160632_gmail_Hanzla__you_re_now_a_member_of_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160632_gmail_The_Pinecone_Newsletter__Augus.md`. Plan: `20260219_160639_20260219_160632_gmail_The_Pinecone_Newsletter__Augus_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160631_gmail_Quick_document_translation_wit.md`. Plan: `20260219_160638_20260219_160631_gmail_Quick_document_translation_wit_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed unknown task `20260219_160630_gmail_Your_AI_Briefing__LLM_Visibili.md`. Plan: `20260219_160637_20260219_160630_gmail_Your_AI_Briefing__LLM_Visibili_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160559_gmail_Build_a_Deep_Research_Agent___.md`. Plan: `20260219_160606_20260219_160559_gmail_Build_a_Deep_Research_Agent____plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160558_gmail_Important_updates_in_Gemini_Ap.md`. Plan: `20260219_160605_20260219_160558_gmail_Important_updates_in_Gemini_Ap_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160557_gmail_Keyboard_shortcut_hacks_for_yo.md`. Plan: `20260219_160605_20260219_160557_gmail_Keyboard_shortcut_hacks_for_yo_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160557_gmail_Hanzla__you_re_now_a_member_of.md`. Plan: `20260219_160604_20260219_160557_gmail_Hanzla__you_re_now_a_member_of_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160556_gmail_Use_your_glossary_to_translate.md`. Plan: `20260219_160603_20260219_160556_gmail_Use_your_glossary_to_translate_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed unknown task `20260219_160555_gmail_New__LLMs_txt_Tracking_Study__.md`. Plan: `20260219_160602_20260219_160555_gmail_New__LLMs_txt_Tracking_Study___plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160554_gmail_AI_Agents_are_mostly_garbage.md`. Plan: `20260219_160601_20260219_160554_gmail_AI_Agents_are_mostly_garbage_plan.md`. Confidence: medium.
+- [2026-02-19 16:06] Processed email task `20260219_160553_gmail_How_to_read_any_website_in_you.md`. Plan: `20260219_160600_20260219_160553_gmail_How_to_read_any_website_in_you_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed unknown task `20260219_160552_gmail_Moodle_2_0_Plugin_Launch___Fre.md`. Plan: `20260219_160559_20260219_160552_gmail_Moodle_2_0_Plugin_Launch___Fre_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed email task `20260219_160552_gmail_Check_out_nano-banana__our_new.md`. Plan: `20260219_160559_20260219_160552_gmail_Check_out_nano-banana__our_new_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed email task `20260219_160520_gmail_Updates_to_Discord_s_Policies.md`. Plan: `20260219_160529_20260219_160520_gmail_Updates_to_Discord_s_Policies_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed email task `20260219_160520_gmail_Access_the_Groq_Speed__From_GP.md`. Plan: `20260219_160528_20260219_160520_gmail_Access_the_Groq_Speed__From_GP_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed unknown task `20260219_160519_gmail_Latest_Update_from_WeatherAPI_.md`. Plan: `20260219_160527_20260219_160519_gmail_Latest_Update_from_WeatherAPI__plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed email task `20260219_160518_gmail_Try_GPT-5_for_free.md`. Plan: `20260219_160526_20260219_160518_gmail_Try_GPT-5_for_free_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed email task `20260219_160517_gmail__August__Deep_Agents__OpenSWE_.md`. Plan: `20260219_160525_20260219_160517_gmail__August__Deep_Agents__OpenSWE__plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed email task `20260219_160517_gmail_Want_more_control_over_your_tr.md`. Plan: `20260219_160524_20260219_160517_gmail_Want_more_control_over_your_tr_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed unknown task `20260219_160516_gmail_Are_Google_s_AI_Overviews_Citi.md`. Plan: `20260219_160524_20260219_160516_gmail_Are_Google_s_AI_Overviews_Citi_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed email task `20260219_160515_gmail_Early_Access__Discord_Pinecone.md`. Plan: `20260219_160523_20260219_160515_gmail_Early_Access__Discord_Pinecone_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed email task `20260219_160514_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_160522_20260219_160514_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 16:05] Processed email task `20260219_160513_gmail_Updates_to_Groq_s_Terms___Poli.md`. Plan: `20260219_160521_20260219_160513_gmail_Updates_to_Groq_s_Terms___Poli_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160442_gmail_Pinecone__September_Edition__.md`. Plan: `20260219_160451_20260219_160442_gmail_Pinecone__September_Edition___plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160441_gmail_Build_your_own_Deep_Agent___Ne.md`. Plan: `20260219_160449_20260219_160441_gmail_Build_your_own_Deep_Agent___Ne_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160440_gmail_Unlock_your_Facebook_account.md`. Plan: `20260219_160448_20260219_160440_gmail_Unlock_your_Facebook_account_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160439_gmail_Reenie_Crossman__blondell802d7.md`. Plan: `20260219_160447_20260219_160439_gmail_Reenie_Crossman__blondell802d7_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed unknown task `20260219_160440_gmail_Coming_Soon__A_New_In-App_Expe.md`. Plan: `20260219_160447_20260219_160440_gmail_Coming_Soon__A_New_In-App_Expe_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160438_gmail_Your_ads_are_not_delivering.md`. Plan: `20260219_160445_20260219_160438_gmail_Your_ads_are_not_delivering_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160437_gmail_We_re_placing_a_temporary_hold.md`. Plan: `20260219_160444_20260219_160437_gmail_We_re_placing_a_temporary_hold_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160436_gmail_Your_ad_was_approved.md`. Plan: `20260219_160444_20260219_160436_gmail_Your_ad_was_approved_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160436_gmail_You_need_to_log_back_into_Face.md`. Plan: `20260219_160443_20260219_160436_gmail_You_need_to_log_back_into_Face_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160435_gmail_Your_business_account_is_restr.md`. Plan: `20260219_160442_20260219_160435_gmail_Your_business_account_is_restr_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160404_gmail_Your_business_account_needs_at.md`. Plan: `20260219_160413_20260219_160404_gmail_Your_business_account_needs_at_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160403_gmail__Action_required__We_restricte.md`. Plan: `20260219_160413_20260219_160403_gmail__Action_required__We_restricte_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160402_gmail_Pakistan_Exclusive__Refer_to_S.md`. Plan: `20260219_160411_20260219_160402_gmail_Pakistan_Exclusive__Refer_to_S_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed unknown task `20260219_160401_gmail_Have_You_Tried_Our_New_In-App_.md`. Plan: `20260219_160409_20260219_160401_gmail_Have_You_Tried_Our_New_In-App__plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160400_gmail_You_logged_into_Speaky_with_Fa.md`. Plan: `20260219_160409_20260219_160400_gmail_You_logged_into_Speaky_with_Fa_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160359_gmail__September__Middleware_in_Lang.md`. Plan: `20260219_160408_20260219_160359_gmail__September__Middleware_in_Lang_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160359_gmail_Pinecone_Release_Notes__Septem.md`. Plan: `20260219_160406_20260219_160359_gmail_Pinecone_Release_Notes__Septem_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160357_gmail_We_need_more_information_to_ap.md`. Plan: `20260219_160405_20260219_160357_gmail_We_need_more_information_to_ap_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160358_gmail_Security_alert.md`. Plan: `20260219_160405_20260219_160358_gmail_Security_alert_plan.md`. Confidence: medium.
+- [2026-02-19 16:04] Processed email task `20260219_160356_gmail_Verify_your_student_status_for.md`. Plan: `20260219_160405_20260219_160356_gmail_Verify_your_student_status_for_plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed email task `20260219_160325_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_160334_20260219_160325_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed email task `20260219_160324_gmail_Check_out_your_new_achievement.md`. Plan: `20260219_160332_20260219_160324_gmail_Check_out_your_new_achievement_plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed unknown task `20260219_160323_gmail_The__440K_AI_Error_Originality.md`. Plan: `20260219_160331_20260219_160323_gmail_The__440K_AI_Error_Originality_plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed email task `20260219_160323_gmail_Don_t_ask_your_users_for_their.md`. Plan: `20260219_160330_20260219_160323_gmail_Don_t_ask_your_users_for_their_plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed email task `20260219_160322_gmail_Getting_started_with_Devpost.md`. Plan: `20260219_160329_20260219_160322_gmail_Getting_started_with_Devpost_plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed email task `20260219_160321_gmail_The_WebMind_Innovation_Hackath.md`. Plan: `20260219_160329_20260219_160321_gmail_The_WebMind_Innovation_Hackath_plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed email task `20260219_160320_gmail_Welcome_to_Upwork.md`. Plan: `20260219_160328_20260219_160320_gmail_Welcome_to_Upwork_plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed unknown task `20260219_160318_gmail_Welcome_to_n8n_.md`. Plan: `20260219_160327_20260219_160318_gmail_Welcome_to_n8n__plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed email task `20260219_160319_gmail___You_re_all_set__What_s_your_.md`. Plan: `20260219_160327_20260219_160319_gmail___You_re_all_set__What_s_your__plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed email task `20260219_160318_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_160326_20260219_160318_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed email task `20260219_160246_gmail_Need_some_help__We_ve_got_you_.md`. Plan: `20260219_160303_20260219_160246_gmail_Need_some_help__We_ve_got_you__plan.md`. Confidence: medium.
+- [2026-02-19 16:03] Processed unknown task `20260219_160246_gmail_With_templates__you_re_already.md`. Plan: `20260219_160302_20260219_160246_gmail_With_templates__you_re_already_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160245_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_160258_20260219_160245_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160244_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_160257_20260219_160244_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160242_gmail_Hanzla__here_s_your_beginner_s.md`. Plan: `20260219_160254_20260219_160242_gmail_Hanzla__here_s_your_beginner_s_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160243_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_160254_20260219_160243_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed unknown task `20260219_160241_gmail_Important_Update__Default_Mode.md`. Plan: `20260219_160252_20260219_160241_gmail_Important_Update__Default_Mode_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed unknown task `20260219_160240_gmail_Complex_automation_for_technic.md`. Plan: `20260219_160251_20260219_160240_gmail_Complex_automation_for_technic_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160239_gmail_Want_to_figure_out_a_winning_p.md`. Plan: `20260219_160250_20260219_160239_gmail_Want_to_figure_out_a_winning_p_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed unknown task `20260219_160238_gmail_Introducing_AI_Workflow_Builde.md`. Plan: `20260219_160249_20260219_160238_gmail_Introducing_AI_Workflow_Builde_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed unknown task `20260219_160207_gmail_We_d_love_your_feedback__and_w.md`. Plan: `20260219_160228_20260219_160207_gmail_We_d_love_your_feedback__and_w_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160204_gmail_New_tools__New_challenges__You.md`. Plan: `20260219_160224_20260219_160204_gmail_New_tools__New_challenges__You_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed unknown task `20260219_160206_gmail_Your_Android_device_will_soon_.md`. Plan: `20260219_160224_20260219_160206_gmail_Your_Android_device_will_soon__plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160203_gmail_Meta_Hacker_Cup_Reminder__Roun.md`. Plan: `20260219_160222_20260219_160203_gmail_Meta_Hacker_Cup_Reminder__Roun_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160200_gmail_And_the_winner_is____-_WebMind.md`. Plan: `20260219_160220_20260219_160200_gmail_And_the_winner_is____-_WebMind_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160201_gmail_What_will_your_success_story_b.md`. Plan: `20260219_160219_20260219_160201_gmail_What_will_your_success_story_b_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160157_gmail_LangChain_raises__125M_to_buil.md`. Plan: `20260219_160219_20260219_160157_gmail_LangChain_raises__125M_to_buil_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed email task `20260219_160158_gmail_Updates_to_Lead_Ad_Terms.md`. Plan: `20260219_160219_20260219_160158_gmail_Updates_to_Lead_Ad_Terms_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed unknown task `20260219_160156_gmail_Your_n8n_trial_ends_soon__it_s.md`. Plan: `20260219_160213_20260219_160156_gmail_Your_n8n_trial_ends_soon__it_s_plan.md`. Confidence: medium.
+- [2026-02-19 16:02] Processed facebook_post task `20260219_160155_gmail_82__of_Amazon__Herbal_Remedies.md`. Plan: `20260219_160210_20260219_160155_gmail_82__of_Amazon__Herbal_Remedies_plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed email task `20260219_160123_gmail_A_new_Community_Livestream_all.md`. Plan: `20260219_160132_20260219_160123_gmail_A_new_Community_Livestream_all_plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed unknown task `20260219_160122_gmail_Your_n8n_trial_has_ended.md`. Plan: `20260219_160131_20260219_160122_gmail_Your_n8n_trial_has_ended_plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed email task `20260219_160121_gmail_Launch_Week_recap__Everything_.md`. Plan: `20260219_160131_20260219_160121_gmail_Launch_Week_recap__Everything__plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed unknown task `20260219_160122_gmail_Download_your_workflows.md`. Plan: `20260219_160131_20260219_160122_gmail_Download_your_workflows_plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed email task `20260219_160119_gmail_Share_some_quick_feedback_.md`. Plan: `20260219_160129_20260219_160119_gmail_Share_some_quick_feedback__plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed unknown task `20260219_160120_gmail_n8n_-_Feedback_in_2_clicks.md`. Plan: `20260219_160129_20260219_160120_gmail_n8n_-_Feedback_in_2_clicks_plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed email task `20260219_160118_gmail_You_have_48_notifications_abou.md`. Plan: `20260219_160127_20260219_160118_gmail_You_have_48_notifications_abou_plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed unknown task `20260219_160117_gmail_Originality_ai_News__Chiang_Ma.md`. Plan: `20260219_160126_20260219_160117_gmail_Originality_ai_News__Chiang_Ma_plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed email task `20260219_160116_gmail_No_tricks__just_hacks_____Spel.md`. Plan: `20260219_160124_20260219_160116_gmail_No_tricks__just_hacks_____Spel_plan.md`. Confidence: medium.
+- [2026-02-19 16:01] Processed email task `20260219_160115_gmail__October__LangChain___LangGrap.md`. Plan: `20260219_160123_20260219_160115_gmail__October__LangChain___LangGrap_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160044_gmail_Verify_your_email.md`. Plan: `20260219_160053_20260219_160044_gmail_Verify_your_email_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160043_gmail_Wait__I_can_take_the_test_at_h.md`. Plan: `20260219_160053_20260219_160043_gmail_Wait__I_can_take_the_test_at_h_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160042_gmail_Your_ticket_to_opportunities_w.md`. Plan: `20260219_160052_20260219_160042_gmail_Your_ticket_to_opportunities_w_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed unknown task `20260219_160042_gmail_Man_or_Machine__The_Toronto_St.md`. Plan: `20260219_160051_20260219_160042_gmail_Man_or_Machine__The_Toronto_St_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160041_gmail_You_have_126_notifications_abo.md`. Plan: `20260219_160049_20260219_160041_gmail_You_have_126_notifications_abo_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160040_gmail_How_we_re_scaling_to_millions_.md`. Plan: `20260219_160049_20260219_160040_gmail_How_we_re_scaling_to_millions__plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160039_gmail_Pssst____here_s_a_sneak_peek__.md`. Plan: `20260219_160048_20260219_160039_gmail_Pssst____here_s_a_sneak_peek___plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160038_gmail_Action_needed__Your_profile_is.md`. Plan: `20260219_160048_20260219_160038_gmail_Action_needed__Your_profile_is_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160037_gmail_Builders_Wanted__New_Challenge.md`. Plan: `20260219_160046_20260219_160037_gmail_Builders_Wanted__New_Challenge_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160038_gmail_Hanzla__here_s_how_to_make_you.md`. Plan: `20260219_160046_20260219_160038_gmail_Hanzla__here_s_how_to_make_you_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160005_gmail_Test_and_improve_your_agent___.md`. Plan: `20260219_160015_20260219_160005_gmail_Test_and_improve_your_agent____plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed facebook_post task `20260219_160005_gmail_Is_That_Reddit_Post_Likely_AI_.md`. Plan: `20260219_160014_20260219_160005_gmail_Is_That_Reddit_Post_Likely_AI__plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160004_gmail_Hi__it_s_Duo__Ready_to_unlock_.md`. Plan: `20260219_160012_20260219_160004_gmail_Hi__it_s_Duo__Ready_to_unlock__plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160003_gmail_64171943_is_your_security_code.md`. Plan: `20260219_160011_20260219_160003_gmail_64171943_is_your_security_code_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160002_gmail_64171943_is_your_security_code.md`. Plan: `20260219_160011_20260219_160002_gmail_64171943_is_your_security_code_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160001_gmail_64171943_is_your_security_code.md`. Plan: `20260219_160010_20260219_160001_gmail_64171943_is_your_security_code_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_155959_gmail_283069_is_your_Instagram_code.md`. Plan: `20260219_160010_20260219_155959_gmail_283069_is_your_Instagram_code_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160000_gmail_Did_you_just_log_in_near_Lahor.md`. Plan: `20260219_160010_20260219_160000_gmail_Did_you_just_log_in_near_Lahor_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_160000_gmail_Did_you_just_add_an_account_to.md`. Plan: `20260219_160008_20260219_160000_gmail_Did_you_just_add_an_account_to_plan.md`. Confidence: medium.
+- [2026-02-19 16:00] Processed email task `20260219_155958_gmail_Two-factor_authentication_is_o.md`. Plan: `20260219_160008_20260219_155958_gmail_Two-factor_authentication_is_o_plan.md`. Confidence: medium.
+- [2026-02-19 15:59] Processed email task `20260219_155927_gmail_Phone_number_added_as_a_two-fa.md`. Plan: `20260219_155936_20260219_155927_gmail_Phone_number_added_as_a_two-fa_plan.md`. Confidence: medium.
+- [2026-02-19 15:59] Processed email task `20260219_155925_gmail_Gemini_3_is_here_.md`. Plan: `20260219_155935_20260219_155925_gmail_Gemini_3_is_here__plan.md`. Confidence: medium.
+- [2026-02-19 15:59] Processed email task `20260219_155925_gmail_You_have_16_notifications_abou.md`. Plan: `20260219_155934_20260219_155925_gmail_You_have_16_notifications_abou_plan.md`. Confidence: medium.
+- [2026-02-19 15:59] Processed email task `20260219_155924_gmail_WhatsApp_Support_1381958063464.md`. Plan: `20260219_155934_20260219_155924_gmail_WhatsApp_Support_1381958063464_plan.md`. Confidence: medium.
+- [2026-02-19 15:59] Processed facebook_post task `20260219_155923_gmail___Adnan_Alam_commented____Alre.md`. Plan: `20260219_155932_20260219_155923_gmail___Adnan_Alam_commented____Alre_plan.md`. Confidence: medium.
+- [2026-02-19 15:59] Processed unknown task `20260219_155922_gmail_Deep_Scan_is_Live____Discover_.md`. Plan: `20260219_155931_20260219_155922_gmail_Deep_Scan_is_Live____Discover__plan.md`. Confidence: medium.
+- [2026-02-19 15:59] Processed email task `20260219_155921_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_155931_20260219_155921_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 15:59] Processed email task `20260219_155921_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_155930_20260219_155921_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 15:59] Processed email task `20260219_155920_gmail_Security_alert_for_khangormani.md`. Plan: `20260219_155929_20260219_155920_gmail_Security_alert_for_khangormani_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed facebook_post task `20260219_155849_gmail____Šohaib_Bilal_Khan_commented.md`. Plan: `20260219_155857_20260219_155849_gmail____Šohaib_Bilal_Khan_commented_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155848_gmail_New_login_to_Instagram_from_In.md`. Plan: `20260219_155856_20260219_155848_gmail_New_login_to_Instagram_from_In_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155847_gmail_APIs__Challenges__and_Projects.md`. Plan: `20260219_155855_20260219_155847_gmail_APIs__Challenges__and_Projects_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed unknown task `20260219_155847_gmail_Is_the_New_GPT-5_1_Detectable_.md`. Plan: `20260219_155855_20260219_155847_gmail_Is_the_New_GPT-5_1_Detectable__plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155846_gmail__GitHub__A_Google_identity_was.md`. Plan: `20260219_155853_20260219_155846_gmail__GitHub__A_Google_identity_was_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155845_gmail_abdullahniaz_sent_you_a_messag.md`. Plan: `20260219_155853_20260219_155845_gmail_abdullahniaz_sent_you_a_messag_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155844_gmail_shawnidevpost_mentioned_you_in.md`. Plan: `20260219_155853_20260219_155844_gmail_shawnidevpost_mentioned_you_in_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155843_gmail_carlisle_cryptonite_sent_you_a.md`. Plan: `20260219_155852_20260219_155843_gmail_carlisle_cryptonite_sent_you_a_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155844_gmail_Stop_copy_pasting_into_coding_.md`. Plan: `20260219_155851_20260219_155844_gmail_Stop_copy_pasting_into_coding__plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155842_gmail_janetdevpost_mentioned_you_in_.md`. Plan: `20260219_155850_20260219_155842_gmail_janetdevpost_mentioned_you_in__plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed unknown task `20260219_155811_gmail_Get_500_credits_for_Deep_Scan_.md`. Plan: `20260219_155820_20260219_155811_gmail_Get_500_credits_for_Deep_Scan__plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155810_gmail_janetdevpost_mentioned_you_in_.md`. Plan: `20260219_155820_20260219_155810_gmail_janetdevpost_mentioned_you_in__plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155809_gmail_Update_to_our_User_Agreement_a.md`. Plan: `20260219_155819_20260219_155809_gmail_Update_to_our_User_Agreement_a_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155808_gmail_Get_open_for_business_with_you.md`. Plan: `20260219_155818_20260219_155808_gmail_Get_open_for_business_with_you_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155806_gmail_Your_Fiverr_seller_account_has.md`. Plan: `20260219_155816_20260219_155806_gmail_Your_Fiverr_seller_account_has_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155807_gmail_A_new_phone_number_was_added_t.md`. Plan: `20260219_155816_20260219_155807_gmail_A_new_phone_number_was_added_t_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155804_gmail_You_look_like_you_mean_busines.md`. Plan: `20260219_155816_20260219_155804_gmail_You_look_like_you_mean_busines_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155803_gmail___Sheikh_Muhammad_Aamir_commen.md`. Plan: `20260219_155815_20260219_155803_gmail___Sheikh_Muhammad_Aamir_commen_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155805_gmail_Your_info_was_successfully_ver.md`. Plan: `20260219_155815_20260219_155805_gmail_Your_info_was_successfully_ver_plan.md`. Confidence: medium.
+- [2026-02-19 15:58] Processed email task `20260219_155802_gmail_Get_to_know_our_Community_Stan.md`. Plan: `20260219_155813_20260219_155802_gmail_Get_to_know_our_Community_Stan_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155731_gmail_DeepL_updates_you_shouldn_t_mi.md`. Plan: `20260219_155740_20260219_155731_gmail_DeepL_updates_you_shouldn_t_mi_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155729_gmail_You_ve_got_new_messages_from_a.md`. Plan: `20260219_155738_20260219_155729_gmail_You_ve_got_new_messages_from_a_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155730_gmail_Hanzla__here_are_the_top-payin.md`. Plan: `20260219_155738_20260219_155730_gmail_Hanzla__here_are_the_top-payin_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155729_gmail_Build_a_Gig_that_brings_busine.md`. Plan: `20260219_155737_20260219_155729_gmail_Build_a_Gig_that_brings_busine_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed unknown task `20260219_155728_gmail_Are_Gemini_3_and_Grok_4_1_Fast.md`. Plan: `20260219_155736_20260219_155728_gmail_Are_Gemini_3_and_Grok_4_1_Fast_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155727_gmail__Tis_the_Season_for_Side_Proje.md`. Plan: `20260219_155735_20260219_155727_gmail__Tis_the_Season_for_Side_Proje_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155726_gmail_New_login_on_your_Fiverr_accou.md`. Plan: `20260219_155734_20260219_155726_gmail_New_login_on_your_Fiverr_accou_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155726_gmail_Set_the_perfect_price.md`. Plan: `20260219_155733_20260219_155726_gmail_Set_the_perfect_price_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155724_gmail___Muhammad_Rizwan_Saeed_commen.md`. Plan: `20260219_155732_20260219_155724_gmail___Muhammad_Rizwan_Saeed_commen_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155725_gmail_Invitation_to_access_the_chann.md`. Plan: `20260219_155732_20260219_155725_gmail_Invitation_to_access_the_chann_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155652_gmail_Let_s_spread_the_word_about_yo.md`. Plan: `20260219_155702_20260219_155652_gmail_Let_s_spread_the_word_about_yo_plan.md`. Confidence: medium.
+- [2026-02-19 15:57] Processed email task `20260219_155653_gmail_Year-end_budgets_are_flowing__.md`. Plan: `20260219_155700_20260219_155653_gmail_Year-end_budgets_are_flowing___plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155650_gmail_Introduction_to_LangChain___ne.md`. Plan: `20260219_155659_20260219_155650_gmail_Introduction_to_LangChain___ne_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155651_gmail_You_spent_this_much_in_AI_2025.md`. Plan: `20260219_155659_20260219_155651_gmail_You_spent_this_much_in_AI_2025_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed unknown task `20260219_155650_gmail_95___of_Holiday_Recipes_are_St.md`. Plan: `20260219_155658_20260219_155650_gmail_95___of_Holiday_Recipes_are_St_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155649_gmail_Talk_your_way_to_the_top.md`. Plan: `20260219_155658_20260219_155649_gmail_Talk_your_way_to_the_top_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155647_gmail_Your_request__7047366_was_rece.md`. Plan: `20260219_155656_20260219_155647_gmail_Your_request__7047366_was_rece_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155648_gmail_69638940_is_your_security_code.md`. Plan: `20260219_155656_20260219_155648_gmail_69638940_is_your_security_code_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155647_gmail_69638940_is_your_security_code.md`. Plan: `20260219_155656_20260219_155647_gmail_69638940_is_your_security_code_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155646_gmail_Your_Europe_Direct_reply_no__7.md`. Plan: `20260219_155655_20260219_155646_gmail_Your_Europe_Direct_reply_no__7_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155615_gmail_Action_required__Finish_settin.md`. Plan: `20260219_155623_20260219_155615_gmail_Action_required__Finish_settin_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155614_gmail_Security_alert.md`. Plan: `20260219_155623_20260219_155614_gmail_Security_alert_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155613_gmail___Hanzla__finish_setting_up_yo.md`. Plan: `20260219_155621_20260219_155613_gmail___Hanzla__finish_setting_up_yo_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155612_gmail__December__State_of_Agent_Engi.md`. Plan: `20260219_155620_20260219_155612_gmail__December__State_of_Agent_Engi_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155612_gmail__Tis_still_the_season_for_ship.md`. Plan: `20260219_155619_20260219_155612_gmail__Tis_still_the_season_for_ship_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155610_gmail_RE__Payoneer_Reference_Number_.md`. Plan: `20260219_155619_20260219_155610_gmail_RE__Payoneer_Reference_Number__plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed facebook_post task `20260219_155611_gmail___Sheikh_Muhammad_Aamir_commen.md`. Plan: `20260219_155618_20260219_155611_gmail___Sheikh_Muhammad_Aamir_commen_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155609_gmail_Multilingual__Minimal_effort__.md`. Plan: `20260219_155618_20260219_155609_gmail_Multilingual__Minimal_effort___plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed facebook_post task `20260219_155609_gmail___Muhammad_Kashif_Hanif_commen.md`. Plan: `20260219_155617_20260219_155609_gmail___Muhammad_Kashif_Hanif_commen_plan.md`. Confidence: medium.
+- [2026-02-19 15:56] Processed email task `20260219_155608_gmail_Re__Not_Receiving_Verification.md`. Plan: `20260219_155616_20260219_155608_gmail_Re__Not_Receiving_Verification_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed unknown task `20260219_155537_gmail___Muhammad_Kashif_Hanif_commen.md`. Plan: `20260219_155546_20260219_155537_gmail___Muhammad_Kashif_Hanif_commen_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed facebook_post task `20260219_155536_gmail____Ahmad_Fraz_commented______ا.md`. Plan: `20260219_155544_20260219_155536_gmail____Ahmad_Fraz_commented______ا_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed facebook_post task `20260219_155535_gmail____Mian_Ahmad_Joiya_commented_.md`. Plan: `20260219_155543_20260219_155535_gmail____Mian_Ahmad_Joiya_commented__plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed facebook_post task `20260219_155534_gmail____RA_H_IB_commented______انا_.md`. Plan: `20260219_155543_20260219_155534_gmail____RA_H_IB_commented______انا__plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed facebook_post task `20260219_155534_gmail______ابراہیم_مرزا__commented__.md`. Plan: `20260219_155542_20260219_155534_gmail______ابراہیم_مرزا__commented___plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155533_gmail___Adnan_Alam_commented_on_a_ph.md`. Plan: `20260219_155541_20260219_155533_gmail___Adnan_Alam_commented_on_a_ph_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155532_gmail_Please_verify_your_email_addre.md`. Plan: `20260219_155540_20260219_155532_gmail_Please_verify_your_email_addre_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155531_gmail_Your_request_to_connect_to_Jaz.md`. Plan: `20260219_155539_20260219_155531_gmail_Your_request_to_connect_to_Jaz_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155530_gmail_Two-step_verification_turned_o.md`. Plan: `20260219_155538_20260219_155530_gmail_Two-step_verification_turned_o_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155415_gmail_Updates_to_how_privacy_setting.md`. Plan: `20260219_155509_20260219_155415_gmail_Updates_to_how_privacy_setting_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155458_gmail___Tanveer_Bhatti_commented_on_.md`. Plan: `20260219_155507_20260219_155458_gmail___Tanveer_Bhatti_commented_on__plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155459_gmail_Update_on_your_request_for_rec.md`. Plan: `20260219_155507_20260219_155459_gmail_Update_on_your_request_for_rec_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155414_gmail_Now_GA__Build_agents_in_LangSm.md`. Plan: `20260219_155507_20260219_155414_gmail_Now_GA__Build_agents_in_LangSm_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed facebook_post task `20260219_155457_gmail____Malik_Hamad_commented______.md`. Plan: `20260219_155506_20260219_155457_gmail____Malik_Hamad_commented_______plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155456_gmail___Shahzil_Naqvi_commented_on_a.md`. Plan: `20260219_155506_20260219_155456_gmail___Shahzil_Naqvi_commented_on_a_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155455_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_155505_20260219_155455_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155456_gmail_You_were_a_Grammarly_legend_la.md`. Plan: `20260219_155505_20260219_155456_gmail_You_were_a_Grammarly_legend_la_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155453_gmail_Easy_self-care_you_can_start_t.md`. Plan: `20260219_155502_20260219_155453_gmail_Easy_self-care_you_can_start_t_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155454_gmail_Your_password_has_been_changed.md`. Plan: `20260219_155502_20260219_155454_gmail_Your_password_has_been_changed_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155453_gmail_Weekend_Lab__Leverage_Your_Wee.md`. Plan: `20260219_155501_20260219_155453_gmail_Weekend_Lab__Leverage_Your_Wee_plan.md`. Confidence: medium.
+- [2026-02-19 15:55] Processed email task `20260219_155452_gmail_Did_you_just_log_in_near_Faisa.md`. Plan: `20260219_155500_20260219_155452_gmail_Did_you_just_log_in_near_Faisa_plan.md`. Confidence: medium.
+- [2026-02-19 15:54] Processed email task `20260219_155420_gmail_Ready_to_write_more_.md`. Plan: `20260219_155429_20260219_155420_gmail_Ready_to_write_more__plan.md`. Confidence: medium.
+- [2026-02-19 15:54] Processed unknown task `20260219_155420_gmail_Happy_New_Year__2025_Originali.md`. Plan: `20260219_155428_20260219_155420_gmail_Happy_New_Year__2025_Originali_plan.md`. Confidence: medium.
+- [2026-02-19 15:54] Processed email task `20260219_155418_gmail_Weekend_Lab__Turn_Your_Knowled.md`. Plan: `20260219_155427_20260219_155418_gmail_Weekend_Lab__Turn_Your_Knowled_plan.md`. Confidence: medium.
+- [2026-02-19 15:54] Processed email task `20260219_155419_gmail_New_year__Same_goal__Ship_some.md`. Plan: `20260219_155427_20260219_155419_gmail_New_year__Same_goal__Ship_some_plan.md`. Confidence: medium.
+- [2026-02-19 15:54] Processed email task `20260219_155417_gmail_Grammarly_keeps_your_work_clea.md`. Plan: `20260219_155427_20260219_155417_gmail_Grammarly_keeps_your_work_clea_plan.md`. Confidence: medium.
+- [2026-02-19 15:54] Processed email task `20260219_155417_gmail_Take_50__off_Pro__Take_back_yo.md`. Plan: `20260219_155427_20260219_155417_gmail_Take_50__off_Pro__Take_back_yo_plan.md`. Confidence: medium.
+- [2026-02-19 15:54] Processed email task `20260219_155413_gmail_You___ChatGPT_Images.md`. Plan: `20260219_155424_20260219_155413_gmail_You___ChatGPT_Images_plan.md`. Confidence: medium.
+- [2026-02-19 15:54] Processed email task `20260219_155416_gmail___See_what_you_ve_achieved___s.md`. Plan: `20260219_155424_20260219_155416_gmail___See_what_you_ve_achieved___s_plan.md`. Confidence: medium.
+- [2026-02-19 15:53] Processed email task `20260219_155259_gmail_New_login_to_Instagram_from_Th.md`. Plan: `20260219_155352_20260219_155259_gmail_New_login_to_Instagram_from_Th_plan.md`. Confidence: medium.
+- [2026-02-19 15:53] Processed email task `20260219_155258_gmail_Your_Dreams_Are_Big_-_Make_Sur.md`. Plan: `20260219_155351_20260219_155258_gmail_Your_Dreams_Are_Big_-_Make_Sur_plan.md`. Confidence: medium.
+- [2026-02-19 15:53] Processed email task `20260219_155342_gmail_Ready_for_work__Hanzla__Here_s.md`. Plan: `20260219_155350_20260219_155342_gmail_Ready_for_work__Hanzla__Here_s_plan.md`. Confidence: medium.
+- [2026-02-19 15:53] Processed unknown task `20260219_155340_gmail_AI__Reddit__and_70__Stats_That.md`. Plan: `20260219_155350_20260219_155340_gmail_AI__Reddit__and_70__Stats_That_plan.md`. Confidence: medium.
+- [2026-02-19 15:53] Processed email task `20260219_155341_gmail_jadanjohnson_mentioned_you_in_.md`. Plan: `20260219_155350_20260219_155341_gmail_jadanjohnson_mentioned_you_in__plan.md`. Confidence: medium.
+- [2026-02-19 15:53] Processed email task `20260219_155341_gmail_Grammarly_can_help_detect_AI_w.md`. Plan: `20260219_155350_20260219_155341_gmail_Grammarly_can_help_detect_AI_w_plan.md`. Confidence: medium.
+- [2026-02-19 15:53] Processed email task `20260219_155339_gmail_Weekend_Lab__A_Book_on_Amazon.md`. Plan: `20260219_155350_20260219_155339_gmail_Weekend_Lab__A_Book_on_Amazon_plan.md`. Confidence: medium.
+- [2026-02-19 15:53] Processed email task `20260219_155338_gmail_jadanjohnson_mentioned_you_in_.md`. Plan: `20260219_155347_20260219_155338_gmail_jadanjohnson_mentioned_you_in__plan.md`. Confidence: medium.
