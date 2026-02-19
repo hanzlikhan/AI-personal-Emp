@@ -377,22 +377,27 @@ async def async_main():
     for _ in range(6):
         try:
             async with aiohttp.ClientSession() as s:
+    connector = aiohttp.TCPConnector(limit=5)
+    async with aiohttp.ClientSession(connector=connector) as session:
+        for _ in range(6):
+            try:
                 async with s.get(MCP_BASE_URL, timeout=aiohttp.ClientTimeout(total=5)) as r:
                     if r.status == 200:
                         print(f"{ts()} ✓ MCP server is up.")
                         break
-        except Exception:
-            await asyncio.sleep(5)
-    else:
-        print(f"{ts()} ⚠ MCP server not reachable. Proceeding anyway.")
+            except Exception:
+              if not await wait_for_mcp(session):
+                print(f"{ts()} [WARN] MCP server not reachable. Proceeding anyway.")
+            else:
+                print(f"{ts()} MCP Server Online.")
 
-    # Main loop
-    connector = aiohttp.TCPConnector(limit=5)
-    async with aiohttp.ClientSession(connector=connector) as session:
-        while True:
-            await check_facebook(session)
-            print(f"{ts()} ⏳ Waiting {POLL_INTERVAL}s...")
-            await asyncio.sleep(POLL_INTERVAL)
+            while True:
+                try:
+                    await check_facebook(session)
+                except Exception as e:
+                    print(f"{ts()} Error in loop: {e}")
+                
+                await asyncio.sleep(POLL_INTERVAL)
 
 
 def main():

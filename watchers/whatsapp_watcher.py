@@ -263,16 +263,17 @@ async def async_main():
                         print(f"{ts()} ✓ MCP server is up.")
                         break
         except Exception:
-            await asyncio.sleep(5)
-    else:
-        print(f"{ts()} ⚠ MCP server not reachable. Proceeding anyway (will retry each poll).")
+          if not await wait_for_mcp(session):
+            print(f"{ts()} [WARN] MCP server not reachable. Proceeding anyway (will retry each poll).")
+        else:
+            print(f"{ts()} MCP Server Online.")
 
-    # Main poll loop
-    connector = aiohttp.TCPConnector(limit=5)
-    async with aiohttp.ClientSession(connector=connector) as session:
         while True:
-            await check_whatsapp(session)
-            print(f"{ts()} ⏳ Waiting {POLL_INTERVAL}s...")
+            try:
+                await check_whatsapp(session)
+            except Exception as e:
+                print(f"{ts()} Error in loop: {e}")
+            
             await asyncio.sleep(POLL_INTERVAL)
 
 
