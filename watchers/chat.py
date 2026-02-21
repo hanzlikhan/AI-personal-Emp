@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional
 
 # Configuration
-HISTORY_ file = Path("Logs/chat_history.jsonl")
+HISTORY_FILE = Path("Logs/chat_history.jsonl")
 NEEDS_ACTION_DIR = Path("Needs_Action")
 PENDING_DIR = Path("Pending_Approval")
 APPROVED_DIR = Path("Approved")
@@ -140,7 +140,8 @@ async def process_command(cmd: str):
     
     if cmd.startswith("@history"):
         for h in _history[-5:]:
-            print(f"[{h['ts'][:16]}] {h['role']}: {h['content']}")
+            if isinstance(h, dict):
+                print(f"[{h.get('ts', '')[:16]}] {h.get('role', '')}: {h.get('content', '')}")
         return
 
     if cmd.startswith("@help"):
@@ -172,8 +173,10 @@ priority: high
 
 ## 🤖 AI Instruction
 1. Analyze the user's request.
-2. Determine the correct MCP tool (email, whatsapp, facebook, etc).
-3. Draft the content.
+2. Determine the correct MCP tool (email, whatsapp, facebook, post-facebook-ai, etc).
+   - If the user asks to generate and post on Facebook, DO NOT draft the text yourself. Instead, use the `post-facebook-ai` endpoint. Provide the `topic` and set `generate_image=True` if an image is requested. The MCP server will handle generating the text and image via Pollinations.ai.
+   - If the user asks you to write/draft/send an email or a WhatsApp message to someone (e.g. "Tell John I will be late"), you will formulate the text of that message using the 'draft' steps.
+3. Draft the content (if manual).
 4. Create an approval request.
 """
     

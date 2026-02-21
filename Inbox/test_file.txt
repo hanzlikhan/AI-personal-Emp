@@ -1,3 +1,0 @@
-This is a test file to demonstrate the file system watcher functionality.
-hi
-h

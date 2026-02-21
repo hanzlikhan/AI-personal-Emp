@@ -272,6 +272,50 @@ async def get_status():
 
 @app.get("/history/{service}")
 async def get_history(service: str):
+    import aiohttp
+    
+    # Try fetching real-time data from MCP first for whatsapp and facebook
+    if service in ["whatsapp", "facebook"]:
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = f"http://localhost:3001/check-{service}"
+                async with session.get(url, timeout=10) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        
+                        feed_items = []
+                        if service == "whatsapp":
+                            # WhatsApp returns { new_messages: [{sender, preview, count}] }
+                            msgs = data.get("new_messages", [])
+                            for m in msgs:
+                                feed_items.append({
+                                    "type": "message",
+                                    "sender": m.get("sender"),
+                                    "preview": m.get("preview"),
+                                    "count": m.get("count"),
+                                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")
+                                })
+                            return feed_items
+
+                        if service == "facebook":
+                            # Facebook returns { friend_requests: [], messages: [], events: [] }
+                            for fr in data.get("friend_requests", []):
+                                fr["type"] = "friend_request"
+                                fr["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+                                feed_items.append(fr)
+                            for msg in data.get("messages", []):
+                                msg["type"] = "message"
+                                msg["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+                                feed_items.append(msg)
+                            for evt in data.get("events", []):
+                                evt["type"] = "notification"
+                                evt["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+                                feed_items.append(evt)
+                            return feed_items
+        except Exception as e:
+            print(f"Error fetching live {service} history from MCP:", e)
+    
+    # Fallback to local JSON files if MCP is unreachable or for other services (gmail)
     f = BASE / f"{service}_history.json"
     if f.exists():
         try:
@@ -371,9 +415,13 @@ source: dashboard_chat
 created: "{time.strftime('%Y-%m-%dT%H:%M:%S')}"
 priority: high
 ---
-# Dashboard Instruction
-
-{req.message}
+## 🤖 AI Instruction
+1. Analyze the user's request.
+2. Determine the correct MCP tool (email, whatsapp, facebook, post-facebook-ai, etc).
+   - If the user asks to generate and post on Facebook, DO NOT draft the text yourself. Instead, use the `post-facebook-ai` endpoint. Provide the `topic` and set `generate_image=True` if an image is requested.
+   - If the user asks you to write/draft/send an email or a WhatsApp message to someone (e.g. "Tell John I will be late"), you will formulate the text of that message using the 'draft' steps.
+3. Draft the content (if manual).
+4. Create an approval request.
 """
     path.write_text(content, encoding="utf-8")
     await sio.emit("toast", {"type": "info", "message": "📤 Instruction sent to AI"})
@@ -390,8 +438,8 @@ async def connect_service(service: str):
             import aiohttp
             async with aiohttp.ClientSession() as session:
                 # FIXED: Use /connect-{service} to keep browser open
-                url = f"http://localhost:3000/connect-{service}"
-                async with session.get(url, timeout=5) as resp:
+                url = f"http://localhost:3001/connect-{service}"
+                async with session.get(url, timeout=30) as resp:
                     return await resp.json()
         except Exception as e:
             # raise HTTPException(status_code=500, detail=f"Failed to trigger {service}: {e}")

@@ -1,3 +1,0 @@
-Second test file to verify the watcher is functioning properly.
-
-This line has been added to test modification detection.

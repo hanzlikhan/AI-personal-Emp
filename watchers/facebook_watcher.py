@@ -21,15 +21,23 @@ Usage:
 """
 
 import asyncio
-import aiohttp  # pip install aiohttp
+import aiohttp
+import os
+import json  # pip install aiohttp
 import hashlib
 import sys
+import io
+
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
 import subprocess
 from datetime import datetime
 from pathlib import Path
 
 # ─── Configuration ────────────────────────────────────────────────────────────
-MCP_BASE_URL     = "http://localhost:3000"
+MCP_BASE_URL     = "http://localhost:3001"
 BASE_DIR         = Path(__file__).resolve().parent
 NEEDS_ACTION_DIR = BASE_DIR.parent / 'Needs_Action'
 REASONING_LOOP   = BASE_DIR / 'reasoning_loop.py'
@@ -291,12 +299,30 @@ def update_heartbeat(status="online"):
         data = {
             "status": status,
             "last_active": datetime.now().isoformat(),
-            "pid": sys.pid if hasattr(sys, 'pid') else 0
+            "pid": os.getpid()
         }
         STATUS_FILE.write_text(json.dumps(data, indent=2))
     except: pass
 
 # ... (sync_history remains same) ...
+def sync_history(new_data: list):
+    try:
+        current = []
+        if HISTORY_FILE.exists():
+            try:
+                current = json.loads(HISTORY_FILE.read_text(encoding='utf-8'))
+            except: pass
+        
+        for m in new_data:
+            if 'timestamp' not in m:
+                m['timestamp'] = datetime.now().isoformat()
+                
+        combined = new_data + current
+        combined = combined[:50]
+        
+        HISTORY_FILE.write_text(json.dumps(combined, indent=2))
+    except Exception as e:
+        print(f"{ts()} ⚠ History sync failed: {e}")
 
 async def check_facebook(session: aiohttp.ClientSession):
     """One Facebook poll cycle with retry and dedup."""
@@ -362,8 +388,21 @@ async def check_facebook(session: aiohttp.ClientSession):
             md_path = create_task_md(event)
             if md_path:
                 await trigger_reasoning(md_path)
+                await notify_backend(event.get('type', 'notification'), event)
 
     await with_retry(_do_check)
+
+
+# ─── Backend Notification ─────────────────────────────────────────────────────
+
+async def notify_backend(event_type: str, data: dict):
+    try:
+        async with aiohttp.ClientSession() as session:
+            payload = {"service": "facebook", "type": event_type, "data": data}
+            await session.post("http://localhost:8000/webhook/facebook", json=payload)
+    except Exception as e:
+        print(f"{ts()} ⚠ Failed to notify backend: {e}")
+
 
 
 # ─── Main Daemon Loop ─────────────────────────────────────────────────────────
@@ -374,30 +413,27 @@ async def async_main():
 
     # Wait for MCP server
     print(f"{ts()} Waiting for MCP server...")
-    for _ in range(6):
-        try:
-            async with aiohttp.ClientSession() as s:
     connector = aiohttp.TCPConnector(limit=5)
     async with aiohttp.ClientSession(connector=connector) as session:
         for _ in range(6):
             try:
-                async with s.get(MCP_BASE_URL, timeout=aiohttp.ClientTimeout(total=5)) as r:
+                async with session.get(MCP_BASE_URL, timeout=aiohttp.ClientTimeout(total=5)) as r:
                     if r.status == 200:
                         print(f"{ts()} ✓ MCP server is up.")
                         break
             except Exception:
-              if not await wait_for_mcp(session):
-                print(f"{ts()} [WARN] MCP server not reachable. Proceeding anyway.")
-            else:
-                print(f"{ts()} MCP Server Online.")
+                print(f"{ts()} [WARN] MCP server not reachable. Retrying...")
+                await asyncio.sleep(5)
+        else:
+             print(f"{ts()} [WARN] MCP Server could not be reached. Proceeding anyway.")
 
-            while True:
-                try:
-                    await check_facebook(session)
-                except Exception as e:
-                    print(f"{ts()} Error in loop: {e}")
-                
-                await asyncio.sleep(POLL_INTERVAL)
+        while True:
+            try:
+                await check_facebook(session)
+            except Exception as e:
+                print(f"{ts()} Error in loop: {e}")
+            
+            await asyncio.sleep(POLL_INTERVAL)
 
 
 def main():

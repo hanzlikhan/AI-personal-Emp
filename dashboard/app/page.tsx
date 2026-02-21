@@ -1,546 +1,524 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { io, Socket } from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { FaWhatsapp, FaFacebook, FaCheckCircle, FaRobot, FaBolt } from "react-icons/fa";
-import { SiGmail } from "react-icons/si";
-import { LuBrainCircuit, LuLayoutDashboard } from "react-icons/lu";
+import {
+  Bell, CheckCircle, XCircle, Send, Radio,
+  LayoutDashboard, Mail, MessageSquare, Facebook, BrainCircuit, Activity,
+  Database, Server, RefreshCw
+} from "lucide-react";
 
 // ── Utils ──────────────────────────────────────────────────────────────────
 function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)); }
 const API = "http://localhost:8000";
+const queryClient = new QueryClient();
 
 // ── Types ──────────────────────────────────────────────────────────────────
-interface Stats { needs_action: number; pending: number; approved: number; done: number; rejected: number; }
 interface InboxItem {
-  filename?: string;
-  id?: string;
-  content?: string;
-  type?: string;
+  filename: string;
+  type: string;
+  subject?: string;
   from?: string;
   sender?: string;
-  subject?: string;
-  snippet?: string;  // from Gmail history
-  preview?: string;  // from WA/FB history
+  person?: string;
+  preview?: string;
+  content?: string;
   timestamp?: string;
-  date?: string;
-  _body?: string;
-  summary?: string;
-  details?: string;
 }
-interface StatusMap { [key: string]: { status: string; last_active: string; pid: number } }
-interface ToastItem { id: string; type: "success" | "error" | "info"; message: string; }
-type Tab = "overview" | "gmail" | "whatsapp" | "facebook" | "approvals" | "chat";
+interface StatusMap { [key: string]: { status: string; last_active: string } }
 
-// ── Hook: Toast ────────────────────────────────────────────────────────────
-function useToast() {
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const add = useCallback((type: ToastItem["type"], message: string) => {
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
-    setToasts(p => [...p, { id, type, message }]);
-    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
-  }, []);
-  return { toasts, add };
+// ── Components ─────────────────────────────────────────────────────────────
+
+// Premium Card
+function Card({ children, className, glow }: { children: React.ReactNode; className?: string; glow?: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        "relative rounded-xl border border-white/5 bg-black/40 backdrop-blur-xl overflow-hidden group",
+        glow && `hover:shadow-[0_0_30px_-10px_${glow}] hover:border-[${glow}]/30 transition-all duration-500`,
+        className
+      )}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+      <div className="relative z-10 p-5">{children}</div>
+    </motion.div>
+  );
 }
 
-// ── Main Dashboard ─────────────────────────────────────────────────────────
-export default function Dashboard() {
-  const [tab, setTab] = useState<Tab>("overview");
-  const [connected, setConnected] = useState(false);
-  const [stats, setStats] = useState<Stats>({ needs_action: 0, pending: 0, approved: 0, done: 0, rejected: 0 });
+// Sidebar Nav Item
+function NavItem({ active, icon: Icon, label, onClick, count }: any) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm transition-all duration-300 relative overflow-hidden group",
+        active ? "bg-white/10 text-white font-medium border-l-2 border-primary" : "text-white/40 hover:text-white hover:bg-white/5"
+      )}
+    >
+      <div className="flex items-center gap-3 z-10">
+        <Icon className={cn("w-5 h-5", active ? "text-primary" : "group-hover:text-primary transition-colors")} />
+        <span>{label}</span>
+      </div>
+      {count > 0 && (
+        <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", active ? "bg-primary text-black" : "bg-white/10")}>
+          {count}
+        </span>
+      )}
+      {active && <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent z-0" />}
+    </button>
+  );
+}
 
-  // Real-time Data
-  const [statusMap, setStatusMap] = useState<StatusMap>({});
+// Live Feed Item
+function FeedItem({ item }: { item: Partial<InboxItem> }) {
+  const filename = item.filename || "";
+  const type = item.type || "";
 
-  // History / Inbox
-  const [gmailHistory, setGmailHistory] = useState<InboxItem[]>([]);
-  const [waHistory, setWaHistory] = useState<InboxItem[]>([]);
-  const [fbHistory, setFbHistory] = useState<InboxItem[]>([]);
-  const [pending, setPending] = useState<InboxItem[]>([]);
-
-  // Chat
-  const [chatLog, setChatLog] = useState<{ role: string; text: string }[]>([
-    { role: "ai", text: "🤖 System Online. Ready for commands." },
-  ]);
-  const [chatInput, setChatInput] = useState("");
-  const { toasts, add } = useToast();
-  const chatEnd = useRef<HTMLDivElement>(null);
-
-  // ── Fetchers ───────────────────────────────────────────────────────────
-  const fetchStats = useCallback(async () => { try { const r = await fetch(`${API}/stats`); if (r.ok) setStats(await r.json()); } catch { } }, []);
-  const fetchStatus = useCallback(async () => { try { const r = await fetch(`${API}/status`); if (r.ok) setStatusMap(await r.json()); } catch { } }, []);
-  const fetchPending = useCallback(async () => {
-    try {
-      const r = await fetch(`${API}/pending`);
-      if (r.ok) {
-        const data: InboxItem[] = await r.json();
-        // Filter out items that are not relevant to the 3 core services if needed
-        // For now, user request was "kaam ki cheese ha jo in 3 cheeso ke related just wohi honi chahiye"
-        // We can filter by checking content/type or just rely on the archive cleanup I did.
-        // But to be safe, let's filter the UI too.
-        // Actually, the simplest way is to just show them. The cleanup script handled the bulk. 
-        // But I will add a client-side filter just in case.
-        const relevant = data.filter(i =>
-          (i.filename && (i.filename.includes("gmail") || i.filename.includes("WhatsApp") || i.filename.includes("Facebook"))) ||
-          (i.type && ["email", "whatsapp", "facebook", "friend_request"].includes(i.type))
-        );
-        setPending(relevant.length > 0 ? relevant : data); // If filter removes everything but data exists, maybe show data? No, show relevant only.
-        setPending(relevant);
-      }
-    } catch { }
-  }, []);
-
-  const fetchHistory = useCallback(async (service: string) => {
-    try {
-      const r = await fetch(`${API}/history/${service}`);
-      if (r.ok) {
-        const data = await r.json();
-        if (service === "gmail") setGmailHistory(data);
-        if (service === "whatsapp") setWaHistory(data);
-        if (service === "facebook") setFbHistory(data);
-      }
-    } catch { }
-  }, []);
-
-  const refreshAll = useCallback(() => {
-    fetchStats(); fetchStatus(); fetchPending();
-    fetchHistory("gmail"); fetchHistory("whatsapp"); fetchHistory("facebook");
-  }, [fetchStats, fetchStatus, fetchPending, fetchHistory]);
-
-  // ── Handlers ───────────────────────────────────────────────────────────
-  const handleConnect = async (service: string) => {
-    add("info", `🚀 Launching ${service} connection...`);
-    try {
-      // Trigger backend to launch auth flow
-      await fetch(`${API}/connect/${service}`, { method: 'POST' });
-    } catch {
-      add("error", "Failed to launch connection");
-    }
-  };
-
-  // ── Socket ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const socket: Socket = io(API, { transports: ["websocket", "polling"] });
-    socket.on("connect", () => { setConnected(true); add("success", "🟢 Brain Connected"); refreshAll(); });
-    socket.on("disconnect", () => setConnected(false));
-
-    // Updates
-    socket.on("status_update", () => fetchStatus());
-    socket.on("history_update", (d: { service: string; data: InboxItem[] }) => {
-      if (d.service === "gmail") setGmailHistory(d.data);
-      if (d.service === "whatsapp") setWaHistory(d.data);
-      if (d.service === "facebook") setFbHistory(d.data);
-    });
-
-    socket.on("inbox_update", () => { fetchStats(); add("info", "📥 New Needs Action item"); });
-    socket.on("approval_update", (d: InboxItem & { action: string }) => {
-      if (d.action === "created") {
-        setPending(p => [d, ...p]);
-        add("info", `⏳ Approval Required: ${d.filename}`);
-      }
-      fetchStats();
-    });
-
-    socket.on("toast", (d: { type: ToastItem["type"]; message: string }) => add(d.type, d.message));
-    refreshAll(); // Initial fetch
-
-    // Polling fallback every 10s just in case
-    const interval = setInterval(refreshAll, 10000);
-    return () => { socket.disconnect(); clearInterval(interval); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatLog]);
-
-  // ── Actions ────────────────────────────────────────────────────────────
-  const approve = async (filename: string) => {
-    setPending(p => p.filter(t => t.filename !== filename));
-    try { await fetch(`${API}/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename }) }); } catch { }
-  };
-  const reject = async (filename: string) => {
-    setPending(p => p.filter(t => t.filename !== filename));
-    try { await fetch(`${API}/reject`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename }) }); } catch { }
-  };
-  const sendChat = async () => {
-    if (!chatInput.trim()) return;
-    const msg = chatInput.trim();
-    setChatInput("");
-    setChatLog(p => [...p, { role: "user", text: msg }]);
-    try {
-      await fetch(`${API}/chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: msg }) });
-      setChatLog(p => [...p, { role: "ai", text: "⚡ Processing..." }]);
-    } catch {
-      setChatLog(p => [...p, { role: "error", text: "❌ Connection Error" }]);
-    }
-  };
-
-  // ── Nav Items ──────────────────────────────────────────────────────────
-  const navItems = [
-    { id: "overview", icon: <LuLayoutDashboard />, label: "Overview" },
-    { id: "gmail", icon: <SiGmail />, label: "Gmail", count: gmailHistory.length, status: statusMap.gmail?.status },
-    { id: "whatsapp", icon: <FaWhatsapp />, label: "WhatsApp", count: waHistory.length, status: statusMap.whatsapp?.status },
-    { id: "facebook", icon: <FaFacebook />, label: "Facebook", count: fbHistory.length, status: statusMap.facebook?.status },
-    { id: "approvals", icon: <FaCheckCircle />, label: "Approvals", count: pending.length, highlight: pending.length > 0 },
-    { id: "chat", icon: <FaRobot />, label: "AI Chat" },
-  ];
+  const isGmail = type === "email" || filename.includes("gmail");
+  const isWA = type === "whatsapp" || filename.includes("WhatsApp");
+  const isFB = type.includes("facebook");
 
   return (
-    <div className="flex h-screen bg-[#050508] text-slate-100 font-sans selection:bg-cyan-500/30">
+    <motion.div
+      layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+      className="p-4 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 transition-colors mb-3 flex gap-4"
+    >
+      <div className={cn("p-2 rounded-lg h-fit flex items-center justify-center", isGmail ? "bg-red-500/10 text-red-400" : isWA ? "bg-emerald-500/10" : "bg-blue-500/10 text-blue-400")}>
+        {isGmail ? <Mail size={18} /> : isWA ? <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" className="w-[18px] h-[18px]" /> : <Facebook size={18} />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start mb-1">
+          <h4 className="font-medium text-white/90 truncate pr-2">{item.subject || item.sender || item.from || "Unknown"}</h4>
+          <span className="text-[10px] text-white/30 font-mono whitespace-nowrap">{new Date().toLocaleTimeString()}</span>
+        </div>
+        <p className="text-sm text-white/50 line-clamp-2">{item.preview || item.content}</p>
+      </div>
+    </motion.div>
+  );
+}
 
-      {/* Background Ambience */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-900/10 blur-[120px] rounded-full mix-blend-screen" />
-        <div className="absolute top-[20%] right-[0%] w-[40%] h-[40%] bg-cyan-900/10 blur-[100px] rounded-full mix-blend-screen" />
-        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[40%] bg-indigo-900/10 blur-[120px] rounded-full mix-blend-screen" />
+// Approval Item
+function ApprovalItem({ item, onApprove, onReject }: any) {
+  return (
+    <motion.div
+      layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+      className="group relative p-5 rounded-xl bg-gradient-to-br from-white/5 to-black border border-white/10 hover:border-primary/50 transition-all"
+    >
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-primary px-2 py-0.5 rounded bg-primary/10 border border-primary/20 uppercase tracking-wider">
+            {item.type || "TASK"}
+          </span>
+          <span className="text-xs text-white/30 font-mono">{item.filename}</span>
+        </div>
       </div>
 
-      {/* Toast Overlay */}
-      <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 pointer-events-none">
+      <h3 className="text-lg font-medium text-white mb-2">{item.subject || item.sender || "Pending Action"}</h3>
+      <div className="text-sm text-white/60 mb-6 font-mono p-3 bg-black/30 rounded border border-white/5">
+        {item.content || item.preview}
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={() => onReject(item.filename)}
+          className="flex-1 py-2.5 rounded-lg border border-white/10 text-white/40 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all text-sm font-medium flex items-center justify-center gap-2">
+          <XCircle size={16} /> Reject
+        </button>
+        <button onClick={() => onApprove(item.filename)}
+          className="flex-1 py-2.5 rounded-lg bg-primary/20 border border-primary/30 text-primary hover:bg-primary hover:text-black transition-all text-sm font-medium flex items-center justify-center gap-2 shadow-[0_0_15px_-5px_var(--primary)]">
+          <CheckCircle size={16} /> Approve
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Core Dashboard Logic ───────────────────────────────────────────────────
+function DashboardCore() {
+  const queryClient = useQueryClient();
+  const [tab, setTab] = useState("live");
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [chatInput, setChatInput] = useState("");
+  const [notifications, setNotifications] = useState<{ id: string, msg: string, type: string }[]>([]);
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Queries
+  const { data: status } = useQuery({ queryKey: ['status'], queryFn: () => fetch(`${API}/status`).then(r => r.json()), refetchInterval: 3000 });
+  const { data: pending } = useQuery({ queryKey: ['pending'], queryFn: () => fetch(`${API}/pending`).then(r => r.json()) });
+  const { data: gmail } = useQuery({ queryKey: ['history', 'gmail'], queryFn: () => fetch(`${API}/history/gmail`).then(r => r.json()) });
+  const { data: wa } = useQuery({ queryKey: ['history', 'whatsapp'], queryFn: () => fetch(`${API}/history/whatsapp`).then(r => r.json()) });
+  const { data: fb } = useQuery({ queryKey: ['history', 'facebook'], queryFn: () => fetch(`${API}/history/facebook`).then(r => r.json()) });
+
+  // Chat State
+  const [chatLog, setChatLog] = useState([{ role: "ai", text: "Silver Tier AI Online. Systems Nominal." }]);
+
+  // Socket Connection
+  useEffect(() => {
+    const s = io(API, { transports: ['websocket'] });
+    setSocket(s);
+
+    s.on("connect", () => addToast("System Connected", "success"));
+    s.on("disconnect", () => addToast("System Offline", "error"));
+    s.on("status_update", () => queryClient.invalidateQueries({ queryKey: ['status'] }));
+
+    // ── KEY: Refresh live feed when watcher syncs new messages ──
+    s.on("history_update", (payload: { service: string; data: any[] }) => {
+      // Instantly refresh the specific service's history in React Query cache
+      queryClient.setQueryData(['history', payload.service], payload.data);
+      queryClient.invalidateQueries({ queryKey: ['history', payload.service] });
+    });
+
+    s.on("inbox_update", () => {
+      queryClient.invalidateQueries({ queryKey: ['pending'] });
+      queryClient.invalidateQueries({ queryKey: ['history', 'whatsapp'] });
+      queryClient.invalidateQueries({ queryKey: ['history', 'facebook'] });
+      queryClient.invalidateQueries({ queryKey: ['history', 'gmail'] });
+    });
+    s.on("chat_reply", (msg: { role: string; text: string }) => {
+      setChatLog(prev => prev.filter(m => m.text !== "Thinking...").concat([msg]));
+    });
+    s.on("toast", (t: { type: string, message: string }) => addToast(t.message, t.type));
+
+    return () => { s.disconnect(); };
+  }, [queryClient]);
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatLog]);
+
+  const addToast = (msg: string, type: string = "info") => {
+    const id = Math.random().toString(36);
+    setNotifications(prev => [...prev, { id, msg, type }]);
+    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 4000);
+  };
+
+  const sendChat = async () => {
+    if (!chatInput.trim()) return;
+    const msg = chatInput;
+    setChatInput("");
+    setChatLog(prev => [...prev, { role: "user", text: msg }, { role: "ai", text: "Thinking..." }]);
+
+    try {
+      await fetch(`${API}/chat`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+    } catch {
+      setChatLog(prev => prev.filter(m => m.text !== "Thinking...").concat([{ role: "error", text: "Command Failed" }]));
+    }
+  };
+
+  const handleConnect = async (service: string) => {
+    setConnecting(service);
+    addToast(`Launching ${service} connection...`, "info");
+    try {
+      await fetch(`${API}/connect/${service}`, { method: "POST" });
+      // Poll a bit faster immediately after
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['status'] }), 2000);
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['status'] }), 5000);
+    } catch (e) {
+      addToast(`Failed to connect ${service}`, "error");
+    } finally {
+      setTimeout(() => setConnecting(null), 8000); // Reset spinner after 8s
+    }
+  };
+
+  const handleApprove = async (filename: string) => {
+    await fetch(`${API}/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename }) });
+    queryClient.setQueryData(['pending'], (old: any[]) => old.filter((i: any) => i.filename !== filename));
+    addToast("Task Approved", "success");
+  };
+
+  const handleReject = async (filename: string) => {
+    await fetch(`${API}/reject`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename }) });
+    queryClient.setQueryData(['pending'], (old: any[]) => old.filter((i: any) => i.filename !== filename));
+    addToast("Task Rejected", "info");
+  };
+
+  const feed = useMemo(() => {
+    const all = [
+      ...(gmail || []).map((i: any) => ({ ...i, type: "email" })),
+      ...(wa || []).map((i: any) => ({ ...i, type: "whatsapp" })),
+      ...(fb || []).map((i: any) => ({ ...i, type: "facebook" }))
+    ];
+    return all.slice(0, 50);
+  }, [gmail, wa, fb]);
+
+  // Filter feed for specific tabs
+  const displayFeed = useMemo(() => {
+    if (tab === "gmail") return feed.filter(i => i.type === "email" || i.filename?.includes("gmail"));
+    if (tab === "whatsapp") return feed.filter(i => i.type === "whatsapp" || i.filename?.includes("WhatsApp"));
+    if (tab === "facebook") return feed.filter(i => i.type.includes("facebook"));
+    return feed;
+  }, [tab, feed]);
+
+  return (
+    <div className="flex h-screen bg-[#050508] text-slate-100 font-sans selection:bg-primary/30 overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-900/5 blur-[120px] rounded-full mix-blend-screen" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-900/5 blur-[120px] rounded-full mix-blend-screen" />
+      </div>
+
+      <div className="fixed top-6 right-6 z-50 flex flex-col gap-2 pointer-events-none">
         <AnimatePresence>
-          {toasts.map(t => (
-            <motion.div key={t.id} initial={{ opacity: 0, x: 50, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 20, scale: 0.9 }}
+          {notifications.map(n => (
+            <motion.div
+              key={n.id} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
               className={cn(
-                "px-4 py-3 rounded-xl text-sm font-medium shadow-2xl backdrop-blur-xl border pointer-events-auto min-w-[300px]",
-                t.type === "success" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300 shadow-emerald-900/20" :
-                  t.type === "error" ? "bg-rose-500/10 border-rose-500/20 text-rose-300 shadow-rose-900/20" :
-                    "bg-cyan-500/10 border-cyan-500/20 text-cyan-300 shadow-cyan-900/20"
-              )}>
-              <div className="flex items-center gap-3">
-                <div className={cn("w-2 h-2 rounded-full shadow-[0_0_10px_currentColor]", t.type === "success" ? "bg-emerald-400" : t.type === "error" ? "bg-rose-400" : "bg-cyan-400")} />
-                {t.message}
-              </div>
+                "px-4 py-3 rounded-lg border backdrop-blur-md shadow-2xl pointer-events-auto min-w-[280px] flex items-center gap-3",
+                n.type === "success" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                  n.type === "error" ? "bg-red-500/10 border-red-500/20 text-red-400" :
+                    "bg-zinc-800/80 border-white/10 text-white"
+              )}
+            >
+              <div className={cn("w-2 h-2 rounded-full shadow-[0_0_10px_currentColor]", n.type === "success" ? "bg-emerald-400" : n.type === "error" ? "bg-red-400" : "bg-primary")} />
+              <span className="text-sm font-medium">{n.msg}</span>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      {/* Sidebar */}
-      <div className="w-64 shrink-0 z-10 flex flex-col border-r border-white/5 bg-black/20 backdrop-blur-xl">
+      <div className="w-64 border-r border-white/5 bg-black/40 backdrop-blur-xl flex flex-col z-10">
         <div className="p-6 border-b border-white/5">
-          <div className="text-xl font-bold bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent tracking-tight flex items-center gap-3">
-            <LuBrainCircuit className="text-cyan-400" /> Silver Tier
+          <div className="flex items-center gap-2 text-xl font-bold tracking-tight text-white mb-1">
+            <BrainCircuit className="text-primary" />
+            <span>AI Assistant</span>
           </div>
-          <div className="text-[11px] text-white/30 tracking-widest uppercase mt-1 font-medium pl-8">Autonomous Entity</div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-white/30 pl-8">Autonomous Entity</div>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          {navItems.map(item => (
-            <button key={item.id} onClick={() => setTab(item.id as Tab)}
-              className={cn(
-                "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all duration-300 group reltative overflow-hidden",
-                tab === item.id
-                  ? "bg-white/5 text-white font-medium shadow-[0_0_20px_-5px_rgba(255,255,255,0.1)] border border-white/10"
-                  : "text-white/40 hover:text-white/80 hover:bg-white/5 border border-transparent"
-              )}>
-              <div className="flex items-center gap-3 relative z-10">
-                <span className={cn("text-lg transition-transform duration-300", tab === item.id ? "scale-110" : "group-hover:scale-110")}>{item.icon}</span>
-                <span>{item.label}</span>
-              </div>
+          <NavItem active={tab === "live"} icon={Activity} label="Live Feed" onClick={() => setTab("live")} />
+          <NavItem active={tab === "approvals"} icon={CheckCircle} label="Approvals" onClick={() => setTab("approvals")} count={pending?.length || 0} />
+          <NavItem active={tab === "chat"} icon={MessageSquare} label="Command Console" onClick={() => setTab("chat")} />
+          <div className="my-4 border-t border-white/5" />
+          <div className="px-4 text-xs font-semibold text-white/20 uppercase tracking-widest mb-2">Systems</div>
+          <NavItem active={tab === "gmail"} icon={Mail} label="Gmail" onClick={() => setTab("gmail")} count={gmail?.length} />
 
-              <div className="flex items-center gap-2">
-                {/* Status Dot */}
-                {item.status && (
-                  <div className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_8px_currentColor]", item.status === "online" ? "bg-emerald-500 text-emerald-500" : "bg-amber-500 text-amber-500")} />
-                )}
-                {/* Count Badge */}
-                {item.count !== undefined && item.count > 0 && (
-                  <span className={cn(
-                    "text-[10px] font-bold px-2 py-0.5 rounded-full border",
-                    item.highlight
-                      ? "bg-cyan-500 text-black border-cyan-400 shadow-[0_0_15px_-3px_rgba(6,182,212,0.6)] animate-pulse"
-                      : "bg-white/10 text-white/70 border-white/5"
-                  )}>
-                    {item.count}
-                  </span>
-                )}
-              </div>
-            </button>
-          ))}
+          <button
+            onClick={() => setTab("whatsapp")}
+            className={cn(
+              "w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm transition-all duration-300 relative overflow-hidden group",
+              tab === "whatsapp" ? "bg-white/10 text-white font-medium border-l-2 border-primary" : "text-white/40 hover:text-white hover:bg-white/5"
+            )}
+          >
+            <div className="flex items-center gap-3 z-10">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-5 h-5" />
+              <span>WhatsApp</span>
+            </div>
+            {(wa?.length || 0) > 0 && (
+              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", tab === "whatsapp" ? "bg-primary text-black" : "bg-white/10")}>
+                {wa?.length}
+              </span>
+            )}
+            {tab === "whatsapp" && <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent z-0" />}
+          </button>
+          <NavItem active={tab === "facebook"} icon={Facebook} label="Facebook" onClick={() => setTab("facebook")} count={fb?.length} />
         </nav>
 
-        <div className="p-6 border-t border-white/5">
+        <div className="p-4 bg-black/20 border-t border-white/5">
           <div className="flex items-center gap-3">
-            <div className={cn("w-2 h-2 rounded-full shadow-[0_0_15px_currentColor] transition-all duration-500", connected ? "bg-emerald-500 text-emerald-500" : "bg-rose-500 text-rose-500")} />
-            <div className="text-xs font-medium text-white/50">{connected ? "Brain Connected" : "Brain Offline"}</div>
+            <div className={cn("w-2 h-2 rounded-full shadow-[0_0_10px_currentColor]", socket?.connected ? "bg-emerald-500 text-emerald-500" : "bg-red-500 text-red-500")} />
+            <div className="text-xs text-white/50">{socket?.connected ? "Brain Connected" : "Brain Offline"}</div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
-        {/* Header */}
-        <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/10 backdrop-blur-sm">
-          <div>
-            <h1 className="text-lg font-medium text-white/90 capitalize tracking-wide">{tab.replace("_", " ")}</h1>
-            <p className="text-xs text-white/30 mt-0.5">Real-time Command Center</p>
+      <main className="flex-1 relative z-10 flex flex-col min-w-0">
+        <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-black/20 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-white/80">
+            <LayoutDashboard size={18} className="text-primary" />
+            <span className="font-medium capitalize">{tab.replace("-", " ")}</span>
           </div>
-          <div className="flex items-center gap-4">
-            <button onClick={refreshAll} className="p-2 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-colors">
-              ↺
-            </button>
+          <div className="flex gap-4">
+            <div className="flex gap-2">
+              {Object.entries(status || {}).map(([Key, Val]: any) => (
+                <div key={Key} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
+                  <div className={cn("w-1.5 h-1.5 rounded-full", Val.status === "online" ? "bg-emerald-500" : "bg-red-500")} />
+                  <span className="text-[10px] uppercase font-bold text-white/50">{Key}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </header>
 
-        {/* Scroll Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-8">
+        <div className="flex-1 p-8 overflow-y-auto">
           <AnimatePresence mode="wait">
-            <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            {/* ── LIVE FEED & SERVICE TABS ── */}
+            {(tab === "live" || tab === "gmail" || tab === "whatsapp" || tab === "facebook") && (
+              <motion.div key="feed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-4xl mx-auto space-y-6">
 
-              {/* ── STATUS DASHBOARD ── */}
-              {tab === "overview" && (
-                <div className="space-y-8 max-w-7xl mx-auto">
-                  {/* Stats Grid - Hidden per user request to 'khatam karo' the 300+ confusing stats. 
-                      Replacing with a cleaner Status Summary of the 3 active services. 
-                  */}
-                  <div className="grid grid-cols-3 gap-6 mb-8">
-                    {/* We can just show the Service Status Cards as the main view. */}
-                  </div>
-
-                  {/* Services Status */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <ServiceStatus title="Gmail" icon={<SiGmail />} status={statusMap.gmail} count={gmailHistory.length} color="rose" onClick={() => setTab("gmail")} onConnect={() => handleConnect("gmail")} />
-                    <ServiceStatus title="WhatsApp" icon={<FaWhatsapp />} status={statusMap.whatsapp} count={waHistory.length} color="emerald" onClick={() => setTab("whatsapp")} onConnect={() => handleConnect("whatsapp")} />
-                    <ServiceStatus title="Facebook" icon={<FaFacebook />} status={statusMap.facebook} count={fbHistory.length} color="blue" onClick={() => setTab("facebook")} onConnect={() => handleConnect("facebook")} />
-                  </div>
-
-                  {/* Pending Tasks */}
-                  {pending.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-white/70 uppercase tracking-wider">⚡ Pending Approvals</h2>
+                {/* Stats Cards - Only on Live Tab */}
+                {tab === "live" && (
+                  <div className="grid grid-cols-3 gap-4 mb-8">
+                    <Card glow="#10b981" className="bg-emerald-500/5 border-emerald-500/10 relative group/card">
+                      <div className="flex justify-between items-start">
+                        <div className="text-emerald-400 mb-2"><MessageSquare /></div>
+                        {status?.whatsapp?.status !== 'online' && (
+                          <button
+                            disabled={connecting === 'whatsapp'}
+                            onClick={() => handleConnect('whatsapp')}
+                            className={cn(
+                              "transition-all bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 text-xs px-2 py-1 rounded",
+                              connecting === 'whatsapp' ? "opacity-100 cursor-wait" : "opacity-0 group-hover/card:opacity-100"
+                            )}>
+                            {connecting === 'whatsapp' ? "Connecting..." : "Connect"}
+                          </button>
+                        )}
                       </div>
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                        {pending.map(item => (
-                          <ApprovalCard key={item.filename} item={item} onApprove={approve} onReject={reject} />
-                        ))}
+                      <div className="text-2xl font-bold text-white">{wa?.length || 0}</div>
+                      <div className="text-xs text-white/30 uppercase tracking-widest flex items-center gap-2">
+                        WhatsApp
+                        {status?.whatsapp?.status === 'online' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_currentColor]" />}
                       </div>
+                    </Card>
+
+                    <Card glow="#ef4444" className="bg-red-500/5 border-red-500/10 relative group/card">
+                      <div className="flex justify-between items-start">
+                        <div className="text-red-400 mb-2"><Mail /></div>
+                        {status?.gmail?.status !== 'online' && (
+                          <button
+                            disabled={connecting === 'gmail'}
+                            onClick={() => handleConnect('gmail')}
+                            className={cn(
+                              "transition-all bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs px-2 py-1 rounded",
+                              connecting === 'gmail' ? "opacity-100 cursor-wait" : "opacity-0 group-hover/card:opacity-100"
+                            )}>
+                            {connecting === 'gmail' ? "Auth..." : "Connect"}
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-2xl font-bold text-white">{gmail?.length || 0}</div>
+                      <div className="text-xs text-white/30 uppercase tracking-widest flex items-center gap-2">
+                        Gmail
+                        {status?.gmail?.status === 'online' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_currentColor]" />}
+                      </div>
+                    </Card>
+
+                    <Card glow="#3b82f6" className="bg-blue-500/5 border-blue-500/10 relative group/card">
+                      <div className="flex justify-between items-start">
+                        <div className="text-blue-400 mb-2"><Facebook /></div>
+                        {status?.facebook?.status !== 'online' && (
+                          <button
+                            disabled={connecting === 'facebook'}
+                            onClick={() => handleConnect('facebook')}
+                            className={cn(
+                              "transition-all bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 text-xs px-2 py-1 rounded",
+                              connecting === 'facebook' ? "opacity-100 cursor-wait" : "opacity-0 group-hover/card:opacity-100"
+                            )}>
+                            {connecting === 'facebook' ? "Connecting..." : "Connect"}
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-2xl font-bold text-white">{fb?.length || 0}</div>
+                      <div className="text-xs text-white/30 uppercase tracking-widest flex items-center gap-2">
+                        Facebook
+                        {status?.facebook?.status === 'online' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_currentColor]" />}
+                      </div>
+                    </Card>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                    <Radio className="text-primary animate-pulse" size={18} /> {tab === "live" ? "Live Stream" : `${tab} Feed`}
+                  </h3>
+                  <div className="space-y-2">
+                    <AnimatePresence initial={false}>
+                      {displayFeed.map((item, i) => <FeedItem key={i} item={item} />)}
+                    </AnimatePresence>
+                    {displayFeed.length === 0 && <div className="text-center py-20 text-white/20">No recent activity detected.</div>}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── APPROVALS TAB ── */}
+            {tab === "approvals" && (
+              <motion.div key="approvals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-3xl mx-auto">
+                <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
+                  <CheckCircle className="text-primary" size={18} /> Pending Approvals
+                  <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs text-white/50">{pending?.length || 0}</span>
+                </h3>
+                <div className="grid gap-4">
+                  <AnimatePresence>
+                    {(pending || []).map((item: any) => (
+                      <ApprovalItem key={item.filename} item={item} onApprove={handleApprove} onReject={handleReject} />
+                    ))}
+                  </AnimatePresence>
+                  {pending?.length === 0 && (
+                    <div className="text-center py-20 border border-dashed border-white/10 rounded-xl">
+                      <CheckCircle className="mx-auto text-white/10 mb-2" size={48} />
+                      <p className="text-white/30">All tasks handled. You're clear.</p>
                     </div>
                   )}
                 </div>
-              )}
+              </motion.div>
+            )}
 
-              {/* ── GMAIL TAB ── */}
-              {tab === "gmail" && (
-                <div className="space-y-6 max-w-5xl mx-auto">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-light text-white">Inbox History</h2>
-                    <Badge status={statusMap.gmail?.status} />
-                  </div>
-                  {gmailHistory.length === 0 ? <Empty msg="No email history synced yet." /> :
-                    gmailHistory.map(email => <GmailCard key={email.id || email.filename} item={email} />)
-                  }
+            {/* ── CHAT TAB ── */}
+            {tab === "chat" && (
+              <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col h-[calc(100vh-180px)] max-w-4xl mx-auto">
+                <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
+                  {chatLog.map((msg, i) => (
+                    <motion.div
+                      key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                      className={cn(
+                        "flex gap-3 max-w-[80%]",
+                        msg.role === "user" ? "ml-auto flex-row-reverse" : ""
+                      )}
+                    >
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border",
+                        msg.role === "user" ? "bg-white/10 border-white/10" :
+                          msg.role === "error" ? "bg-red-500/10 border-red-500/20 text-red-400" :
+                            "bg-primary/10 border-primary/20 text-primary"
+                      )}>
+                        {msg.role === "user" ? "You" : <BrainCircuit size={16} />}
+                      </div>
+                      <div className={cn(
+                        "p-3 rounded-2xl text-sm leading-relaxed",
+                        msg.role === "user" ? "bg-white text-black" :
+                          msg.role === "error" ? "bg-red-500/10 text-red-200 border border-red-500/20" :
+                            "bg-white/5 text-white/90 border border-white/10"
+                      )}>
+                        {msg.text}
+                      </div>
+                    </motion.div>
+                  ))}
+                  <div ref={chatEndRef} />
                 </div>
-              )}
-
-              {/* ── WHATSAPP TAB ── */}
-              {tab === "whatsapp" && (
-                <div className="space-y-6 max-w-5xl mx-auto">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-light text-white">Recent Chats</h2>
-                    <Badge status={statusMap.whatsapp?.status} />
-                  </div>
-                  {waHistory.length === 0 ? <Empty msg="No WhatsApp history synced yet." /> :
-                    waHistory.map((chat, i) => <WhatsappCard key={i} item={chat} />)
-                  }
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && sendChat()}
+                    placeholder="Command the system..."
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 pr-14 text-white placeholder-white/20 focus:outline-none focus:border-primary/50 transition-colors"
+                    autoFocus
+                  />
+                  <button onClick={sendChat} className="absolute right-2 top-2 p-2 bg-primary text-black rounded-lg hover:bg-primary/90 transition-colors">
+                    <Send size={18} />
+                  </button>
                 </div>
-              )}
-
-              {/* ── FACEBOOK TAB ── */}
-              {tab === "facebook" && (
-                <div className="space-y-6 max-w-5xl mx-auto">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-light text-white">Timeline & Events</h2>
-                    <Badge status={statusMap.facebook?.status} />
-                  </div>
-                  {fbHistory.length === 0 ? <Empty msg="No Facebook history synced yet." /> :
-                    fbHistory.map((evt, i) => <FacebookCard key={i} item={evt} />)
-                  }
-                </div>
-              )}
-
-              {/* ── APPROVALS TAB ── */}
-              {tab === "approvals" && (
-                <div className="space-y-6 max-w-5xl mx-auto">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-light text-white">Pending Actions</h2>
-                    <div className="text-xs text-white/40">{pending.length} waiting</div>
-                  </div>
-                  {pending.length === 0 ? <Empty msg="All clear. No pending actions." /> :
-                    pending.map(item => <ApprovalCard key={item.filename} item={item} onApprove={approve} onReject={reject} />)
-                  }
-                </div>
-              )}
-
-              {/* ── CHAT TAB ── */}
-              {tab === "chat" && (
-                <div className="max-w-4xl mx-auto h-[70vh] flex flex-col bg-white/5 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm shadow-2xl">
-                  {/* Chat messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    {chatLog.map((m, i) => (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
-                        <div className={cn(
-                          "max-w-[80%] px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-lg",
-                          m.role === "user"
-                            ? "bg-cyan-600/20 border border-cyan-500/30 text-cyan-100 rounded-br-none"
-                            : "bg-white/10 border border-white/5 text-white/80 rounded-bl-none"
-                        )}>
-                          {m.text}
-                        </div>
-                      </motion.div>
-                    ))}
-                    <div ref={chatEnd} />
-                  </div>
-                  {/* Input */}
-                  <div className="p-4 bg-white/5 border-t border-white/5 flex gap-3">
-                    <input
-                      className="flex-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all placeholder-white/20"
-                      placeholder="Instruct System AI..."
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && sendChat()}
-                      autoFocus
-                    />
-                    <button onClick={sendChat} className="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-medium transition-all shadow-[0_0_20px_-5px_rgba(6,182,212,0.5)]">
-                      Send
-                    </button>
-                  </div>
-                </div>
-              )}
-
-            </motion.div>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-// ── Components ─────────────────────────────────────────────────────────────
-
-function StatCard({ label, value, color, glow }: any) {
+// ── Wrapper ────────────────────────────────────────────────────────────────
+export default function Dashboard() {
   return (
-    <div className={cn("p-5 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-md transition-all hover:bg-white/10 hover:border-white/10 group", glow && `hover:${glow} hover:shadow-2xl`)}>
-      <div className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-1">{label}</div>
-      <div className={cn("text-3xl font-bold transition-all group-hover:scale-105 origin-left", color)}>{value}</div>
-    </div>
-  );
-}
-
-function ServiceStatus({ title, icon, status, count, color, onClick, onConnect }: any) {
-  const isOnline = status?.status === "online";
-  const lastActive = status?.last_active ? new Date(status.last_active).toLocaleTimeString() : "Never";
-
-  const colorStyles = {
-    rose: "group-hover:text-rose-400 group-hover:border-rose-500/30 group-hover:shadow-[0_0_30px_-10px_rgba(244,63,94,0.3)]",
-    emerald: "group-hover:text-emerald-400 group-hover:border-emerald-500/30 group-hover:shadow-[0_0_30px_-10px_rgba(16,185,129,0.3)]",
-    blue: "group-hover:text-blue-400 group-hover:border-blue-500/30 group-hover:shadow-[0_0_30px_-10px_rgba(59,130,246,0.3)]"
-  }[color as string] || "";
-
-  return (
-    <button onClick={onClick} className={cn("group text-left p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-md transition-all duration-300 relative overflow-hidden", colorStyles)}>
-      <div className="flex items-start justify-between mb-4 relative z-10">
-        <div className="text-3xl p-3 bg-white/5 rounded-2xl border border-white/5">{icon}</div>
-        <div className="text-right">
-          <div className="text-3xl font-bold text-white transition-colors">{count}</div>
-          <div className="text-[10px] text-white/30 uppercase tracking-wider">Items</div>
-        </div>
-      </div>
-      <div className="relative z-10">
-        <div className="text-lg font-medium text-white/80 transition-colors flex items-center justify-between">
-          {title}
-          {!isOnline && (
-            <div onClick={(e) => { e.stopPropagation(); onConnect(); }}
-              className="text-[10px] px-2 py-1 bg-white/10 rounded hover:bg-white/20 border border-white/10 transition-colors uppercase tracking-wider font-bold">
-              Connect
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2 mt-1.5">
-          <div className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_8px_currentColor]", isOnline ? "bg-emerald-500 text-emerald-500 animate-pulse" : "bg-red-500 text-red-500")} />
-          <div className="text-xs text-white/30">
-            {isOnline ? `Live • Last seen ${lastActive}` : "Offline"}
-          </div>
-        </div>
-      </div>
-      {/* Glow bg */}
-      <div className={cn("absolute -bottom-10 -right-10 w-32 h-32 blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity",
-        color === "rose" ? "bg-rose-500" : color === "emerald" ? "bg-emerald-500" : "bg-blue-500")} />
-    </button>
-  );
-}
-
-function ApprovalCard({ item, onApprove, onReject }: any) {
-  const title = item.subject || item.person || item.filename;
-  const content = item.preview || item.snippet || item.content || "";
-
-  return (
-    <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md hover:border-cyan-500/30 transition-all group">
-      <div className="flex items-start justify-between mb-3">
-        <div className="text-sm font-medium text-cyan-200 truncate pr-4">{title}</div>
-        <div className="text-[10px] bg-white/5 px-2 py-1 rounded text-white/30 font-mono">{item.type || "TASK"}</div>
-      </div>
-      <div className="text-xs text-white/50 leading-relaxed line-clamp-3 mb-5 font-mono bg-black/20 p-3 rounded-lg border border-white/5">
-        {content.slice(0, 300)}
-      </div>
-      <div className="flex gap-3">
-        <button onClick={() => onReject(item.filename)} className="flex-1 py-2 rounded-lg border border-white/10 hover:bg-rose-500/20 hover:border-rose-500/50 hover:text-rose-200 transition-all text-xs text-white/40">Reject</button>
-        <button onClick={() => onApprove(item.filename)} className="flex-1 py-2 rounded-lg bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/30 hover:shadow-[0_0_15px_-5px_rgba(6,182,212,0.5)] transition-all text-xs font-medium">Approve</button>
-      </div>
-    </div>
-  );
-}
-
-function Badge({ status }: { status: string }) {
-  if (status === "online") return <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold shadow-[0_0_10px_-3px_rgba(16,185,129,0.3)]">ONLINE</div>;
-  return <div className="px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold">OFFLINE</div>;
-}
-
-function Empty({ msg }: { msg: string }) {
-  return <div className="py-20 text-center border border-dashed border-white/10 rounded-2xl bg-white/2"><div className="text-white/20 text-sm">{msg}</div></div>;
-}
-
-function GmailCard({ item }: { item: InboxItem }) {
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-5 rounded-xl bg-white/5 border border-white/5 hover:border-rose-500/30 hover:bg-white/10 transition-all group">
-      <div className="flex justify-between items-start mb-1">
-        <div className="text-sm font-medium text-white/90">{item.from}</div>
-        <div className="text-[10px] text-white/30">{item.date ? new Date(item.date).toLocaleDateString() : ""}</div>
-      </div>
-      <div className="text-xs text-rose-200/80 mb-2 font-medium">{item.subject}</div>
-      <div className="text-xs text-white/40 line-clamp-2">{item.snippet}</div>
-    </motion.div>
-  );
-}
-
-function WhatsappCard({ item }: { item: InboxItem }) {
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-5 rounded-xl bg-white/5 border border-white/5 hover:border-emerald-500/30 hover:bg-white/10 transition-all">
-      <div className="flex justify-between items-start mb-2">
-        <div className="text-sm font-medium text-emerald-300">{item.sender}</div>
-        <div className="text-[10px] text-white/30">{item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : ""}</div>
-      </div>
-      <div className="text-xs text-white/60 bg-black/20 p-3 rounded-lg border border-white/5 inline-block max-w-full">
-        {item.preview}
-      </div>
-    </motion.div>
-  );
-}
-
-function FacebookCard({ item }: { item: InboxItem }) {
-  const isReq = item.type === "friend_request";
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-5 rounded-xl bg-white/5 border border-white/5 hover:border-blue-500/30 hover:bg-white/10 transition-all flex items-start gap-4">
-      <div className={cn("mt-1 p-2 rounded-lg border", isReq ? "bg-blue-500/20 border-blue-500/30 text-blue-300" : "bg-purple-500/20 border-purple-500/30 text-purple-300")}>
-        {isReq ? <FaFacebook /> : <FaBolt />}
-      </div>
-      <div>
-        <div className="text-sm font-medium text-white/90">{item.subject || (item as any).summary || "Facebook Event"}</div>
-        <div className="text-xs text-white/40 mt-1">{item.content || (item as any).details}</div>
-        <div className="text-[10px] text-white/20 mt-2">{item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : ""}</div>
-      </div>
-    </motion.div>
+    <QueryClientProvider client={queryClient}>
+      <DashboardCore />
+    </QueryClientProvider>
   );
 }

@@ -85,7 +85,7 @@ def wait_for_endpoint(url, timeout=30):
     start = time.time()
     while time.time() - start < timeout:
         try:
-            requests.get(url, timeout=1)
+            requests.get(url, timeout=5)
             return True
         except:
             time.sleep(1)
@@ -132,26 +132,48 @@ def main():
     signal.signal(signal.SIGINT, lambda s, f: cleanup())
     check_dependencies()
     
-    # Kill old processes
-    os.system("taskkill /f /im uvicorn.exe >nul 2>&1")
-    os.system("taskkill /f /im node.exe >nul 2>&1")
+    # Kill old processes by Port (Robust cleanup)
+    def kill_port(port):
+        try:
+            # Find PID using netstat
+            cmd = f"netstat -ano | findstr :{port}"
+            output = subprocess.check_output(cmd, shell=True).decode()
+            lines = output.strip().split('\n')
+            pids = set()
+            for line in lines:
+                parts = line.split()
+                # Line format: TCP 0.0.0.0:8000 0.0.0.0:0 LISTENING 1234
+                if len(parts) > 4 and str(port) in parts[1]:
+                    pids.add(parts[-1])
+            
+            for pid in pids:
+                if pid != "0":
+                    log(f"Killing process on port {port} (PID {pid})...", "yellow")
+                    os.system(f"taskkill /F /PID {pid} >nul 2>&1")
+        except:
+            pass
+
+    kill_port(8000) # Backend
+    kill_port(3001) # MCP
+    os.system("taskkill /f /im node.exe >nul 2>&1") # Cleanup extra node
+
     
     # 1. Start Core Services (Background)
     # Quote the executable path to handle spaces in username
     python_exe = f'"{sys.executable}"'
-    start_background_process("Backend API", f"{python_exe} -m uvicorn watchers.api:socket_app --port 8000", ROOT_DIR)
+    start_background_process("Backend API", f"{python_exe} -m uvicorn backend.main:socket_app --reload --port 8000", ROOT_DIR)
     start_background_process("MCP Server", f"node mcp_server.js", WATCHERS_DIR)
 
     log("Waiting for Core Services...", "yellow")
     log("Waiting for Core Services (up to 60s)...", "yellow")
-    backend_ok = wait_for_endpoint("http://localhost:8000/health", timeout=60)
-    mcp_ok = wait_for_endpoint("http://localhost:3000/health", timeout=60)
+    backend_ok = wait_for_endpoint("http://127.0.0.1:8000/health", timeout=60) # /health is faster
+    mcp_ok = wait_for_endpoint("http://127.0.0.1:3001/health", timeout=60)
     
     if backend_ok and mcp_ok:
         log("Core Services Online!", "green")
     else:
-        if not backend_ok: log("❌ Backend API failed to respond at http://localhost:8000/health", "red")
-        if not mcp_ok: log("❌ MCP Server failed to respond at http://localhost:3000/health", "red")
+        if not backend_ok: log("❌ Backend API failed to respond at http://127.0.0.1:8000/status", "red")
+        if not mcp_ok: log("❌ MCP Server failed to respond at http://127.0.0.1:3001/health", "red")
         
         # Keep window open to see error
         log("Check the console windows for errors.", "red")
@@ -159,8 +181,8 @@ def main():
 
     # 2. Status Check & Instructions
     log("Checking Integration Status...", "cyan")
-    whatsapp_ok = check_integration("WhatsApp", "http://localhost:3000/check-whatsapp")
-    facebook_ok = check_integration("Facebook", "http://localhost:3000/check-facebook")
+    whatsapp_ok = check_integration("WhatsApp", "http://127.0.0.1:3001/check-whatsapp")
+    facebook_ok = check_integration("Facebook", "http://127.0.0.1:3001/check-facebook")
     
     if whatsapp_ok and facebook_ok:
         log("✅ All Integrations Active (Headless Mode)", "green")
@@ -176,16 +198,17 @@ def main():
     start_background_process("Facebook Watcher", f"{python_exe} watchers/facebook_watcher.py", ROOT_DIR)
     # Fixed: Run orchestrator.py (daemon) instead of reasoning_loop.py (one-off)
     start_background_process("AI Brain", f"{python_exe} watchers/orchestrator.py", ROOT_DIR)
+    start_background_process("Approval Watcher", f"{python_exe} watchers/approval_watcher.py", ROOT_DIR)
 
     # 4. Launch Dashboard
     log("Launching Dashboard...", "cyan")
     start_background_process("Frontend", "npm run dev", DASHBOARD_DIR)
     
     time.sleep(5)
-    webbrowser.open("http://localhost:3008")
+    webbrowser.open("http://localhost:3000")
     
     log("\nAll Systems GO! 🚀 (Headless Mode)", "green")
-    log("Dashboard: http://localhost:3008", "white")
+    log("Dashboard: http://localhost:3000", "white")
     log("Press Ctrl+C to stop all services.", "white")
     
     try:

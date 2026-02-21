@@ -1,0 +1,83 @@
+[WHATSAPP] [2026-02-20 12:32:36] [WhatsApp] Watcher starting (polling every 30s)...
+[WHATSAPP] [2026-02-20 12:32:36] MCP Server: http://localhost:3001
+[WHATSAPP] [2026-02-20 12:32:36] Waiting for MCP server...
+[WHATSAPP] [2026-02-20 12:32:36] [WARN] MCP Server could not be reached. Proceeding anyway.
+[WHATSAPP] [2026-02-20 12:32:36] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:32:38] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:32:38] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:33:08] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:33:09] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:33:09] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:33:39] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:33:41] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:33:41] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:34:11] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:34:12] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:34:12] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:34:42] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:34:44] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:34:44] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:35:14] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:35:15] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:35:15] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:35:45] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:35:47] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:35:47] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:36:17] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:36:19] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:36:19] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:36:49] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:36:50] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:36:50] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:37:20] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:37:22] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:37:22] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:37:52] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:37:53] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:37:53] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:38:23] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:38:25] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:38:25] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:38:55] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:38:56] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:38:56] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:39:27] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:39:28] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:39:28] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:39:58] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:40:00] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:40:00] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:40:30] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:40:31] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:40:31] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:41:01] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:41:03] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:41:03] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:41:33] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:41:34] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:41:34] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:42:04] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:42:06] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:42:06] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:42:36] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:42:37] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:42:37] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:43:07] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:43:09] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:43:09] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:43:39] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:43:41] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:43:41] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:44:11] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:44:12] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:44:12] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:44:42] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:44:44] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:44:44] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:45:14] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:45:15] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:45:15] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:45:45] Polling MCP: http://localhost:3001/check-whatsapp
+[WHATSAPP] [2026-02-20 12:45:47] WhatsApp online — 20 chat(s) visible
+[WHATSAPP] [2026-02-20 12:45:47] Error in loop: 'charmap' codec can't encode character '\u26a0' in position 33: character maps to <undefined>
+[WHATSAPP] [2026-02-20 12:46:17] Polling MCP: http://localhost:3001/check-whatsapp

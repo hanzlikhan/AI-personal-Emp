@@ -8,11 +8,17 @@ echo  ========================================
 echo.
 
 REM Kill old processes on ports 8000 and 3008
-echo [Clearing ports 8000 and 3008...]
+echo [Clearing ports 8000, 3000, 3001...]
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8000') do (
     taskkill /F /PID %%a >nul 2>&1
 )
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3008') do (
+    taskkill /F /PID %%a >nul 2>&1
+)
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3000') do (
+    taskkill /F /PID %%a >nul 2>&1
+)
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3001') do (
     taskkill /F /PID %%a >nul 2>&1
 )
 timeout /t 2 >nul
@@ -25,7 +31,7 @@ start "Backend" cmd /k "cd /d %ROOT% && uvicorn watchers.api:socket_app --reload
 timeout /t 3 >nul
 
 REM 2. MCP Server (WhatsApp + Facebook)
-echo [2/5] Starting MCP Server on port 3000...
+echo [2/5] Starting MCP Server on port 3001...
 start "MCP Server" cmd /k "cd /d %ROOT%\watchers && node mcp_server.js"
 timeout /t 4 >nul
 
@@ -50,7 +56,7 @@ start "AI Brain" cmd /k "cd /d %ROOT% && python watchers/reasoning_loop.py"
 timeout /t 2 >nul
 
 REM 7. Frontend (Next.js)
-echo [7/7] Starting Frontend on port 3008...
+echo [7/7] Starting Frontend on port 3000...
 start "Frontend" cmd /k "cd /d %ROOT%\dashboard && npm run dev"
 
 echo.
@@ -58,7 +64,7 @@ echo  ========================================
 echo   All 6 services are starting!
 echo.
 echo   Backend:   http://localhost:8000/health
-echo   Dashboard: http://localhost:3008
+echo   Dashboard: http://localhost:3000
 echo  ========================================
 echo.
 echo   NOTE: First time? You need to:

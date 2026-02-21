@@ -41,7 +41,7 @@ BASE_DIR     = Path(__file__).resolve().parent
 APPROVED_DIR = BASE_DIR.parent / "Approved"
 DONE_DIR     = BASE_DIR.parent / "Done"
 LOGS_DIR     = BASE_DIR.parent / "Logs"
-MCP_BASE_URL = "http://localhost:3000"
+MCP_BASE_URL = "http://localhost:3001"
 
 # ─── Retry config ──────────────────────────────────────────────────────────────
 MAX_RETRIES  = 3

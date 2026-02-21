@@ -20,7 +20,14 @@ Usage:
 
 import os
 import sys
+import io
+
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
 import asyncio
+import aiohttp
 import subprocess
 import pickle
 import time
@@ -51,7 +58,7 @@ NEEDS_ACTION_DIR = BASE_DIR.parent / 'Needs_Action'
 REASONING_LOOP   = BASE_DIR / 'reasoning_loop.py'
 LOG_PREFIX       = "[GMAIL]"
 
-POLL_INTERVAL    = 30          # seconds between checks
+POLL_INTERVAL    = 10          # seconds between checks (faster for demo feel)
 MAX_RETRIES      = 3           # retry attempts for transient errors
 RETRY_DELAY      = 5           # base delay (seconds) for back-off
 MAX_EMAILS       = 10          # max emails fetched per check
@@ -305,8 +312,26 @@ async def check_for_new_emails(service):
                 )
                 # Trigger AI reasoning
                 await _trigger_reasoning(md_path)
+                
+                # Notify Backend
+                await notify_backend("email", details)
 
     return await with_retry(_do_check)
+
+
+# ─── Backend Notification ─────────────────────────────────────────────────────
+
+async def notify_backend(event_type: str, data: dict):
+    """Push event to FastAPI backend."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            await session.post(
+                "http://localhost:8000/webhook/gmail",
+                json={"service": "gmail", "type": event_type, "data": data}
+            )
+    except Exception as e:
+        print(f"{ts()} ⚠ Failed to notify backend: {e}")
+
 
 
 # ─── Draft / Send Helpers (CLI Actions) ───────────────────────────────────────

@@ -343,7 +343,7 @@ created: "{now_iso}"
 # ─── MCP Caller ───────────────────────────────────────────────────────────────
 
 def call_mcp(endpoint: str, payload: dict) -> bool:
-    url = f"http://localhost:3000/{endpoint}"
+    url = f"http://localhost:3001/{endpoint}"
     try:
         log(f"→ MCP POST {url}")
         r = requests.post(url, json=payload, timeout=120)
@@ -439,7 +439,7 @@ async def process_email(fm: dict, body: str) -> tuple[dict, str, dict]:
     # DRAFT
     draft_raw = await call_ai_async(
         f"Context: Email from {sender} about '{subject}'.\nAnalysis: {analyze}\n\n"
-        "Step 3 — DRAFT: Write a complete, professional email reply. "
+        "Step 3 — DRAFT: Write a complete, professional email reply (or new email if this is a new request). "
         "Start with 'Dear [Name],' and end with a professional sign-off. "
         "If no reply is needed, write exactly: NO_REPLY",
         SYSTEM_PROMPT,
@@ -623,6 +623,66 @@ async def process_facebook_message(fm: dict, body: str) -> tuple[dict, str, dict
 
     return cot_steps, suggestion, approval_meta, confidence
 
+async def process_draft_message(instruction: str, platform: str) -> tuple[dict, str, dict, str]:
+    """CoT for drafting a new outbound message based on user instructions."""
+    log(f"📝 Processing draft request for {platform}: {instruction[:60]}...")
+
+    think = await call_ai_async(
+        f"Request: Draft a {platform} message based on this instruction: '{instruction}'\n\n"
+        "Step 1 — THINK: Who is the recipient? What is the core message the user wants to convey?",
+        SYSTEM_PROMPT,
+    )
+
+    analyze = await call_ai_async(
+        f"Context: {think}\n\nStep 2 — ANALYZE: What tone is appropriate for {platform}? "
+        "What specific details must be included?",
+        SYSTEM_PROMPT,
+    )
+
+    draft_raw = await call_ai_async(
+        f"Instruction: {instruction}. Analysis: {analyze}\n\n"
+        f"Step 3 — DRAFT: Write the exact {platform} message. "
+        "Do not include commentary, just the message itself.",
+        SYSTEM_PROMPT,
+    )
+
+    validate = await call_ai_async(
+        f"Draft: {draft_raw}\n\nStep 4 — VALIDATE: Is this accurate and appropriate? Confidence?",
+        SYSTEM_PROMPT,
+    )
+
+    cot_steps = {"think": think, "analyze": analyze, "draft": draft_raw, "validate": validate}
+    confidence = "high" if "high" in validate.lower() else "medium"
+
+    # Best-effort extract target
+    import re
+    target_match = re.search(r'(?:to|tell|email|message)\s+([^+]+?)\s+(?:saying|that|about|:)', instruction, re.IGNORECASE)
+    target_num_match = re.search(r'(\+\d{1,3}[\s-]?\d{3,14})', instruction)
+    
+    # If it's an email, look for an email address
+    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', instruction)
+    
+    if email_match:
+         target = email_match.group(0)
+    else:
+         target = target_num_match.group(1) if target_num_match else (target_match.group(1).strip() if target_match else "Unknown Contact")
+
+    suggestion = (
+        f"**Suggested {platform} Message for {target}:**\n\n"
+        f"> {draft_raw}"
+    )
+
+    if platform.lower() == "email":
+        action = "send_email"
+        # Extract a subject idea
+        subject_raw = await call_ai_async(f"Generate a short 3-5 word email subject for this message:\n{draft_raw}", SYSTEM_PROMPT)
+        approval_meta = {"target": target, "action": action, "subject": subject_raw.replace('"', '').strip()}
+    else:
+        action = "whatsapp"
+        approval_meta = {"target": target, "action": action}
+
+    return cot_steps, suggestion, approval_meta, confidence
+
 async def process_facebook_post(fm: dict, body: str) -> tuple[dict, str, dict]:
     """CoT for generating new Facebook posts."""
     topic = fm.get("topic", "General Update")
@@ -799,6 +859,14 @@ async def ralph_wiggum_loop(filepath: Path, task_id: str, frontmatter: dict, bod
                 mcp_endpoint = "send-facebook-message"  # Fixed endpoint
                 needs_reply  = True
 
+            elif task_type == "manual_chat":
+                # Handle general chat instructions
+                cot_steps, suggestion, approval_meta, confidence = await process_manual(body)
+                action_type = "manual_instruction"
+                mcp_endpoint = "chat-reply" # Virtual endpoint, or just log
+                needs_reply = True
+
+
             elif task_type == "facebook_post":
                 cot_steps, suggestion, approval_meta, confidence = await process_facebook_post(frontmatter, body)
                 action_type  = "facebook_post"
@@ -817,18 +885,36 @@ async def ralph_wiggum_loop(filepath: Path, task_id: str, frontmatter: dict, bod
                 # Intent Detection for Facebook Posting
                 if "facebook" in instruction.lower() and ("post" in instruction.lower() or "status" in instruction.lower()):
                      log(f"  ↪ Redirecting manual instruction to Facebook Post logic")
-                     task_type = "facebook_post" # switch type for next loop or just handle here (recursive call better or just inline?)
-                     # Inline handling:
+                     task_type = "facebook_post"
                      frontmatter["topic"] = instruction
                      cot_steps, suggestion, approval_meta, confidence = await process_facebook_post(frontmatter, instruction)
                      action_type = "facebook_post"
                      mcp_endpoint = "post-facebook"
+                     needs_reply = True
+
+                # Intent Detection for Email
+                elif "email" in instruction.lower() and ("send" in instruction.lower() or "write" in instruction.lower() or "draft" in instruction.lower()):
+                     log(f"  ↪ Redirecting manual instruction to Email logic")
+                     task_type = "email"
+                     cot_steps, suggestion, approval_meta, confidence = await process_draft_message(instruction, "Email")
+                     action_type = "email"
+                     mcp_endpoint = "send-email"
+                     needs_reply = True
+
+                # Intent Detection for WhatsApp
+                elif "whatsapp" in instruction.lower() and ("send" in instruction.lower() or "message" in instruction.lower() or "draft" in instruction.lower()):
+                     log(f"  ↪ Redirecting manual instruction to WhatsApp logic")
+                     task_type = "whatsapp"
+                     cot_steps, suggestion, approval_meta, confidence = await process_draft_message(instruction, "WhatsApp")
+                     action_type = "whatsapp"
+                     mcp_endpoint = "send-whatsapp"
+                     needs_reply = True
+
                 else:
                     cot_steps, suggestion, approval_meta, confidence = await process_manual(instruction)
                     action_type  = "manual"
                     mcp_endpoint = ""
-                
-                needs_reply  = True
+                    needs_reply = True
 
             else:
                 log(f"  ⚠ Unknown task type: {task_type}. Running generic CoT.")
@@ -837,22 +923,53 @@ async def ralph_wiggum_loop(filepath: Path, task_id: str, frontmatter: dict, bod
                 mcp_endpoint = ""
                 needs_reply  = True
 
+            # ── Check for Direct Execution Request ──────────────────────────
+            instruction_text = (body or str(frontmatter)).lower()
+            direct_send = any(keyword in instruction_text for keyword in 
+                ["direct", "directly", "instantly", "immediately", "bina pooche", "without asking", "now", "queue me na jae"]
+            )
+
             # ── Write Plan ────────────────────────────────────────────────
             plan_path = await write_plan(task_id, cot_steps, suggestion, task_type)
 
-            # ── Write Pending Approval (for sensitive actions) ─────────────
+            # ── Execution / Pending Approval ──────────────────────────────
             if needs_reply:
                 reasoning = cot_steps.get("analyze", "") + "\n\n" + cot_steps.get("validate", "")
                 content   = cot_steps.get("draft", suggestion)
 
-                await create_approval_request(
-                    action_type=action_type,
-                    content=content,
-                    metadata=approval_meta,
-                    reasoning=reasoning,
-                    mcp_endpoint=mcp_endpoint,
-                    confidence=confidence,
-                )
+                if direct_send and mcp_endpoint:
+                    log(f"⚡ Direct Execution requested! Sending directly via MCP: {mcp_endpoint}")
+                    # Build matching payload
+                    payload = {}
+                    if action_type == "whatsapp":
+                        payload = {"contact": approval_meta.get("target", ""), "message": content}
+                    elif action_type == "email":
+                        payload = {"to": approval_meta.get("target", ""), "subject": approval_meta.get("subject", "Message from AI"), "body": content}
+                    elif action_type == "facebook_post":
+                        payload = {"topic": approval_meta.get("topic", "Update")}
+                    elif action_type == "facebook_message":
+                        payload = {"content": content}
+                    
+                    if payload:
+                         success = call_mcp(mcp_endpoint, payload)
+                         if success:
+                              log(f"✅ Direct execution successful.")
+                              suggestion += "\n\n*(Sent directly as requested)*"
+                         else:
+                              log(f"⚠ Direct execution failed! Falling back to approval queue.")
+                              direct_send = False # Fallback to approval queue
+                    else:
+                         direct_send = False # Fallback for unsupported direct actions
+                         
+                if not direct_send or not mcp_endpoint:
+                    await create_approval_request(
+                        action_type=action_type,
+                        content=content,
+                        metadata=approval_meta,
+                        reasoning=reasoning,
+                        mcp_endpoint=mcp_endpoint,
+                        confidence=confidence,
+                    )
 
             # ── Update Dashboard ──────────────────────────────────────────
             await update_dashboard(
@@ -913,6 +1030,17 @@ async def execute_approved(filepath: Path):
     elif task_type == "facebook_message":
         payload = {"content": body}
         success = call_mcp("post-facebook", payload)
+
+    elif task_type in ["facebook_post", "facebook_notification"]:
+        # Send topic, text, and ask for image generation if specified
+        payload = {
+            "topic": frontmatter.get("topic", "General"),
+            "text": body,
+            "generate_image": True
+        }
+        # mcp_endpoint would be 'post-facebook' or 'post-facebook-ai'. Let's enforce AI here if it's a post.
+        endpoint = "post-facebook-ai" if task_type == "facebook_post" else mcp_endpoint
+        success = call_mcp(endpoint, payload)
 
     else:
         log(f"⚠ No execution handler for type: {task_type}. Logged only.")
