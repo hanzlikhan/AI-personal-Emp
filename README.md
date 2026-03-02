@@ -2,7 +2,7 @@
 
 Welcome to the AI Employee Vault, a complete file management and automation system built for the Personal AI Employee Hackathon 0. This system implements a robust workflow for processing files and tasks using AI-powered automation.
 
-## 🏆 ronze Tier Achievement
+## 🏆 Silver Tier Achievement
 
 This project successfully implements all Bronze Tier requirements for the Personal AI Employee Hackathon, featuring automated file processing, task management, and AI-driven workflows.
 
