@@ -17,7 +17,7 @@ This project successfully implements all Silver Tier requirements for the Person
 - `/Skills` - AI skill definitions and instructions
 - `/watchers` - File system monitoring scripts
 
-## ⚙️ Core Components
+# ⚙️ Core Components
 
 ### Dashboard.md
 Central monitoring dashboard showing:
